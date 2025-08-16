@@ -28,7 +28,13 @@ from typing import Optional, Type
 import memoization
 import orjson
 
-from py_avro_schema._schemas import JSON_OPTIONS, Option, TypeNotSupportedError, schema
+from py_avro_schema._schemas import (
+    JSON_OPTIONS,
+    Option,
+    TypeNotSupportedError,
+    register_schema,
+    schema,
+)
 from py_avro_schema._typing import DecimalMeta, DecimalType
 
 #: Library version, e.g. 1.0.0, taken from Git tags
@@ -41,6 +47,7 @@ __all__ = [
     "Option",
     "TypeNotSupportedError",
     "generate",
+    "register_schema",
 ]
 
 
