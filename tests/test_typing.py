@@ -58,7 +58,7 @@ def test_decimal_type():
 
 def test_instance_check():
     py_type = DecimalType[4, 2]
-    typeguard.check_type(decimal.Decimal("1.23"), py_type)
+    typeguard.check_type("decimal", decimal.Decimal("1.23"), py_type)
 
 
 def test_zero_precision():
@@ -82,5 +82,5 @@ def test_precision_lt_scale():
 
 
 def test_bad_indexing():
-    with pytest.raises(typeguard.TypeCheckError, match=re.escape('argument "params" (int) is not a tuple')):
+    with pytest.raises(TypeError, match=re.escape('type of argument "params" must be a tuple; got int instead')):
         DecimalType[4]

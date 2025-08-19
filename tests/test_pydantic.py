@@ -15,7 +15,6 @@ from typing import Annotated, List, Optional, Union
 
 import pydantic
 import pytest
-import typeguard
 
 import py_avro_schema as pas
 from py_avro_schema._testing import assert_schema
@@ -77,7 +76,7 @@ def test_string_field_default_wrong_type():
     class PyType(pydantic.BaseModel):
         field_a: str = 1  # That's not valid, because field type is str
 
-    with pytest.raises(typeguard.TypeCheckError, match="int is not an instance of str"):
+    with pytest.raises(TypeError, match="type of default_value must be str; got int instead"):
         assert_schema(PyType, {})
 
 
@@ -147,7 +146,7 @@ def test_list_string_field_default_wrong_type():
     class PyType(pydantic.BaseModel):
         field_a: List[str] = [1]  # Pydantic allows mutable defaults like this
 
-    with pytest.raises(typeguard.TypeCheckError, match="item 0 of list is not an instance of str"):
+    with pytest.raises(TypeError, match=r"type of default_value\[0\] must be str; got int instead"):
         assert_schema(PyType, {})
 
 

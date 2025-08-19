@@ -54,7 +54,7 @@ dependencies = [
     "memoization~=0.4",
     "more-itertools~=10.0",
     "orjson~=3.5",
-    "typeguard~=4.0",
+    "typeguard==2.13.3",    # LS dev dependency `constructs` pins to 2.13.3
 ]
 
 

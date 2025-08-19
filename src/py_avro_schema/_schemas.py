@@ -719,10 +719,10 @@ class UnionSchema(Schema):
         default_index = -1
         for i, item_schema in enumerate(self.item_schemas):
             try:
-                typeguard.check_type(default_value, item_schema.py_type)
+                typeguard.check_type("default_value", default_value, item_schema.py_type)
                 default_index = i
                 break
-            except typeguard.TypeCheckError:
+            except TypeError:
                 continue
         if default_index > 0:
             default_item_schema = self.item_schemas.pop(default_index)
@@ -895,7 +895,7 @@ class RecordField:
         if self.default != dataclasses.MISSING:
             if isinstance(self.schema, UnionSchema):
                 self.schema.sort_item_schemas(self.default)
-            typeguard.check_type(self.default, self.py_type)
+            typeguard.check_type("default_value", self.default, self.py_type)
         else:
             if Option.DEFAULTS_MANDATORY in self.options:
                 raise TypeError(f"Default value for field {self} is missing")
