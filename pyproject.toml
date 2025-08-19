@@ -14,7 +14,7 @@
 
 [project]
 
-name = "py-avro-schema"
+name = "py-avro-schema-ext"
 dynamic = ["version"]
 
 authors = [
