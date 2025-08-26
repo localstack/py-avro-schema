@@ -14,10 +14,11 @@
 
 [project]
 
-name = "py-avro-schema-ext"
+name = "localstack-py-avro-schema"
 dynamic = ["version"]
 
 authors = [
+    { name = "LocalStack Contributors", email = "info@localstack.cloud" },
     { name = "J.P. Morgan Chase & Co.", email = "open_source@jpmorgan.com" }
 ]
 description = "Generate Apache Avro schemas for Python types including standard library data-classes and Pydantic data models."
@@ -60,11 +61,11 @@ dependencies = [
 
 [project.urls]
 
-"Homepage" = "https://github.com/jpmorganchase/py-avro-schema"
-"Bug Tracker" = "https://github.com/jpmorganchase/py-avro-schema/issues"
+"Homepage" = "https://github.com/localstack/py-avro-schema"
+"Bug Tracker" = "https://github.com/localstack/py-avro-schema/issues"
 "Documentation" = "https://py-avro-schema.readthedocs.io"
 "Download" = "https://pypi.python.org/pypi/py-avro-schema"
-"Source Code" = "https://github.com/jpmorganchase/py-avro-schema"
+"Source Code" = "https://github.com/localstack/py-avro-schema"
 
 
 [project.optional-dependencies]

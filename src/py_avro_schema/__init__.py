@@ -38,7 +38,7 @@ from py_avro_schema._schemas import (
 from py_avro_schema._typing import DecimalMeta, DecimalType
 
 #: Library version, e.g. 1.0.0, taken from Git tags
-__version__ = importlib.metadata.version("py-avro-schema-ext")
+__version__ = importlib.metadata.version("localstack-py-avro-schema")
 
 
 __all__ = [
