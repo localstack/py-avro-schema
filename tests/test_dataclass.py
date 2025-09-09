@@ -19,6 +19,7 @@ from typing import Annotated, Dict, List, Optional, Tuple
 import pytest
 
 import py_avro_schema as pas
+from py_avro_schema._alias import register_aliases
 from py_avro_schema._testing import assert_schema
 
 
@@ -400,6 +401,7 @@ def test_dataclass_repeated_string_field():
 
 
 def test_dataclass_repeated_enum_field():
+    @register_aliases(aliases=["test_dataclass.OldEnum"])
     class PyTypeEnum(enum.Enum):
         RED = "RED"
         GREEN = "GREEN"
@@ -412,12 +414,15 @@ def test_dataclass_repeated_enum_field():
     expected = {
         "type": "record",
         "name": "PyType",
+        "namespace": "test_dataclass",
         "fields": [
             {
                 "name": "field_child_1",
                 "type": {
                     "type": "enum",
                     "name": "PyTypeEnum",
+                    "namespace": "test_dataclass",
+                    "aliases": ["test_dataclass.OldEnum"],
                     "symbols": [
                         "RED",
                         "GREEN",
@@ -427,11 +432,11 @@ def test_dataclass_repeated_enum_field():
             },
             {
                 "name": "field_child_2",
-                "type": "PyTypeEnum",
+                "type": "test_dataclass.PyTypeEnum",
             },
         ],
     }
-    assert_schema(PyType, expected)
+    assert_schema(PyType, expected, do_auto_namespace=True)
 
 
 def test_self_ref_field():

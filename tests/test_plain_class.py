@@ -15,10 +15,12 @@ from typing import Annotated
 import pytest
 
 import py_avro_schema
+from py_avro_schema._alias import register_aliases
 from py_avro_schema._testing import assert_schema
 
 
 def test_plain_class_with_type_hints():
+    @register_aliases(aliases=["test_plain_class.OldPyType"])
     class PyType:
         """A port, not using dataclass"""
 
@@ -33,6 +35,8 @@ def test_plain_class_with_type_hints():
     expected = {
         "type": "record",
         "name": "PyType",
+        "namespace": "test_plain_class",
+        "aliases": ["test_plain_class.OldPyType"],
         "fields": [
             {
                 "name": "name",
@@ -54,7 +58,7 @@ def test_plain_class_with_type_hints():
         ],
     }
 
-    assert_schema(PyType, expected)
+    assert_schema(PyType, expected, do_auto_namespace=True)
 
 
 def test_plain_class_annotated():
