@@ -50,6 +50,7 @@ import orjson
 import typeguard
 
 import py_avro_schema._typing
+from py_avro_schema._alias import get_aliases
 
 if TYPE_CHECKING:
     # Pydantic not necessarily required at runtime
@@ -857,6 +858,9 @@ class EnumSchema(NamedSchema):
         }
         if self.namespace is not None:
             enum_schema["namespace"] = self.namespace
+            fqn = f"{self.namespace}.{self.name}"
+            if aliases := get_aliases(fqn):
+                enum_schema["aliases"] = aliases
         if Option.NO_DOC not in self.options:
             doc = _doc_for_class(self.py_type)
             if doc:
@@ -887,6 +891,9 @@ class RecordSchema(NamedSchema):
         }
         if self.namespace is not None:
             record_schema["namespace"] = self.namespace
+            fqn = f"{self.namespace}.{self.name}"
+            if aliases := get_aliases(fqn):
+                record_schema["aliases"] = aliases
         if Option.NO_DOC not in self.options:
             doc = _doc_for_class(self.py_type)
             if doc:
