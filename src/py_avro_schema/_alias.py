@@ -25,12 +25,12 @@ def get_fully_qualified_name(py_type: type) -> str:
     return qualname
 
 
-def register_aliases(aliases: list[FQN]):
+def register_type_aliases(aliases: list[FQN]):
     """
     Decorator to register aliases for a given type.
 
     Example::
-        @register_aliases(aliases=["py_avro_schema.OldAddress"])
+        @register_type_aliases(aliases=["py_avro_schema.OldAddress"])
         class Address(TypedDict):
             street: str
             number: int
@@ -45,12 +45,12 @@ def register_aliases(aliases: list[FQN]):
     return _wrapper
 
 
-def register_alias(alias: FQN):
+def register_type_alias(alias: FQN):
     """
     Decorator to register a single alias for a given type.
 
     Example::
-        @register_alias(alias="py_avro_schema.OldAddress")
+        @register_type_alias(alias="py_avro_schema.OldAddress")
         class Address(TypedDict):
             street: str
             number: int

@@ -15,12 +15,12 @@ from typing import Annotated
 import pytest
 
 import py_avro_schema
-from py_avro_schema._alias import register_aliases
+from py_avro_schema._alias import register_type_aliases
 from py_avro_schema._testing import assert_schema
 
 
 def test_plain_class_with_type_hints():
-    @register_aliases(aliases=["test_plain_class.OldPyType"])
+    @register_type_aliases(aliases=["test_plain_class.OldPyType"])
     class PyType:
         """A port, not using dataclass"""
 
