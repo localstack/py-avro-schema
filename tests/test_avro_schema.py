@@ -10,11 +10,14 @@
 # specific language governing permissions and limitations under the License.
 
 import dataclasses
+import json
+from typing import TypedDict
 
 import avro.schema
 import orjson
 
 import py_avro_schema as pas
+from py_avro_schema._alias import register_type_alias, register_type_aliases
 
 
 def test_package_has_version():
@@ -43,3 +46,21 @@ def test_dataclass_string_field():
     json_data = pas.generate(PyType)
     assert json_data == orjson.dumps(expected)
     assert avro.schema.parse(json_data)
+
+
+def test_avro_type_aliases():
+    @register_type_aliases(aliases=["test_avro_schema.VeryOldDict", "test_avro_schema.OldDict"])
+    class PyTypedDict(TypedDict):
+        value: str
+
+    json_data = pas.generate(PyTypedDict)
+    assert json.loads(json_data)["aliases"] == ["test_avro_schema.OldDict", "test_avro_schema.VeryOldDict"]
+
+    register_type_alias(alias="test_avro_schema.SuperOldDict")(PyTypedDict)
+    pas.generate.cache_clear()
+    json_data = pas.generate(PyTypedDict)
+    assert json.loads(json_data)["aliases"] == [
+        "test_avro_schema.OldDict",
+        "test_avro_schema.SuperOldDict",
+        "test_avro_schema.VeryOldDict",
+    ]
