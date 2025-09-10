@@ -67,4 +67,6 @@ def register_alias(alias: FQN):
 
 def get_aliases(fqn: str) -> list[str]:
     """Returns the list of aliases for a given type"""
-    return list(_ALIASES.get(fqn) or [])
+    if aliases := _ALIASES.get(fqn):
+        return sorted(aliases)
+    return []
