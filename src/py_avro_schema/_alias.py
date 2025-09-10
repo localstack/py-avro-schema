@@ -45,6 +45,26 @@ def register_aliases(aliases: list[FQN]):
     return _wrapper
 
 
+def register_alias(alias: FQN):
+    """
+    Decorator to register a single alias for a given type.
+
+    Example::
+        @register_alias(alias="py_avro_schema.OldAddress")
+        class Address(TypedDict):
+            street: str
+            number: int
+    """
+
+    def _wrapper(cls):
+        """Wrapper function that updates the aliases dictionary"""
+        fqn = get_fully_qualified_name(cls)
+        _ALIASES[fqn].add(alias)
+        return cls
+
+    return _wrapper
+
+
 def get_aliases(fqn: str) -> list[str]:
     """Returns the list of aliases for a given type"""
     return list(_ALIASES.get(fqn) or [])

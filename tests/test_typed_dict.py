@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from py_avro_schema._alias import register_aliases
+from py_avro_schema._alias import register_alias
 from py_avro_schema._testing import assert_schema
 
 
@@ -28,7 +28,7 @@ def test_typed_dict():
 
 
 def test_type_dict_nested():
-    @register_aliases(aliases=["test_typed_dict.OldAddress"])
+    @register_alias("test_typed_dict.OldAddress")
     class Address(TypedDict):
         street: str
         number: int
