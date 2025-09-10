@@ -1,5 +1,8 @@
 """
 Module to register aliases for Python types
+
+This module maintains global state via the _ALIASES registry.
+Decorators will modify this state when applied to classes.
 """
 
 from collections import defaultdict
@@ -28,6 +31,8 @@ def get_fully_qualified_name(py_type: type) -> str:
 def register_type_aliases(aliases: list[FQN]):
     """
     Decorator to register aliases for a given type.
+    It allows for compatible schemas following a change type (e.g., a rename), if the type fields do not
+    change in an incompatible way.
 
     Example::
         @register_type_aliases(aliases=["py_avro_schema.OldAddress"])
@@ -48,6 +53,8 @@ def register_type_aliases(aliases: list[FQN]):
 def register_type_alias(alias: FQN):
     """
     Decorator to register a single alias for a given type.
+    It allows for compatible schemas following a change type (e.g., a rename), if the type fields do not
+    change in an incompatible way.
 
     Example::
         @register_type_alias(alias="py_avro_schema.OldAddress")
