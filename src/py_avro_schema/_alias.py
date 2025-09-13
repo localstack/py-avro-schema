@@ -4,7 +4,6 @@ Module to register aliases for Python types
 This module maintains global state via the _ALIASES registry.
 Decorators will modify this state when applied to classes.
 """
-from __future__ import annotations
 
 import dataclasses
 from collections import defaultdict
@@ -15,14 +14,18 @@ FQN = str
 _ALIASES: dict[FQN, set[FQN]] = defaultdict(set)
 """Maps the FQN of a Python type to a set of aliases"""
 
+
 @dataclasses.dataclass
 class Alias:
     """Alias for a record field"""
+
     alias: str
+
 
 @dataclasses.dataclass
 class Aliases:
     """Aliases for a record field"""
+
     aliases: list[str]
 
 
