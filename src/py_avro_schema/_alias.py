@@ -4,13 +4,26 @@ Module to register aliases for Python types
 This module maintains global state via the _ALIASES registry.
 Decorators will modify this state when applied to classes.
 """
+from __future__ import annotations
 
+import dataclasses
 from collections import defaultdict
+from typing import Annotated, Type, get_args, get_origin
 
 FQN = str
 """Fully qualified name for a Python type"""
 _ALIASES: dict[FQN, set[FQN]] = defaultdict(set)
 """Maps the FQN of a Python type to a set of aliases"""
+
+@dataclasses.dataclass
+class Alias:
+    """Alias for a record field"""
+    alias: str
+
+@dataclasses.dataclass
+class Aliases:
+    """Aliases for a record field"""
+    aliases: list[str]
 
 
 def get_fully_qualified_name(py_type: type) -> str:
@@ -77,3 +90,24 @@ def get_aliases(fqn: str) -> list[str]:
     if aliases := _ALIASES.get(fqn):
         return sorted(aliases)
     return []
+
+
+def get_field_aliases_and_actual_type(py_type: Type) -> tuple[list[str] | None, Type]:
+    """
+    Check if a type contains an alias metadata via `Alias` or `Aliases` as metadata.
+    It returns the eventual aliases and the type.
+    """
+    # py_type is not annotated. It can't have aliases
+    if get_origin(py_type) is not Annotated:
+        return [], py_type
+
+    args = get_args(py_type)
+    actual_type, annotation = args[0], args[1]
+
+    # Annotated type but not an alias. We do nothing.
+    if type(annotation) not in (Alias, Aliases):
+        return [], py_type
+
+    # If the annotated type is an alias, we extract the aliases and return the actual type
+    aliases = Aliases.aliases if type(annotation) is Aliases else [Alias.alias]
+    return aliases, actual_type
