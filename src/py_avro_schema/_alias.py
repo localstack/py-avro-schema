@@ -112,5 +112,5 @@ def get_field_aliases_and_actual_type(py_type: Type) -> tuple[list[str] | None, 
         return [], py_type
 
     # If the annotated type is an alias, we extract the aliases and return the actual type
-    aliases = Aliases.aliases if type(annotation) is Aliases else [Alias.alias]
+    aliases = annotation.aliases if type(annotation) is Aliases else [annotation.alias]
     return aliases, actual_type
