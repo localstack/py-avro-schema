@@ -929,7 +929,7 @@ class RecordField:
             aliases = []
         self.py_type = py_type
         self.name = name
-        self.aliases = aliases or []
+        self.aliases = aliases
         self._namespace = namespace
         self.default = default
         self.docs = docs
