@@ -17,6 +17,7 @@ import pydantic
 import pytest
 
 import py_avro_schema as pas
+from py_avro_schema._alias import Alias
 from py_avro_schema._testing import assert_schema
 
 
@@ -490,6 +491,24 @@ def test_annotated_decimal():
                     "precision": 3,
                     "scale": 2,
                 },
+            }
+        ],
+    }
+    assert_schema(PyType, expected)
+
+
+def test_field_alias():
+    class PyType(pydantic.BaseModel):
+        field_a: Annotated[str, Alias("field_b")]
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "aliases": ["field_b"],
+                "name": "field_a",
+                "type": "string",
             }
         ],
     }

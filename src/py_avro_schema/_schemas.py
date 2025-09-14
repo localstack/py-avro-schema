@@ -1033,11 +1033,13 @@ class PydanticSchema(RecordSchema):
         default = dataclasses.MISSING if py_field.is_required() else py_field.get_default(call_default_factory=True)
         py_type = self._annotation(name)
         record_name = py_field.alias if Option.USE_FIELD_ALIAS in self.options and py_field.alias else name
+        aliases, actual_type = get_field_aliases_and_actual_type(py_type)
         field_obj = RecordField(
-            py_type=py_type,
+            py_type=actual_type,
             name=record_name,
             namespace=self.namespace_override,
             default=default,
+            aliases=aliases,
             docs=py_field.description or "",
             options=self.options,
         )
@@ -1102,7 +1104,7 @@ class PlainClassSchema(RecordSchema):
             name=py_field.name,
             namespace=self.namespace_override,
             default=default,
-            aliases=[],
+            aliases=aliases,
             options=self.options,
         )
         return field_obj
