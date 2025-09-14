@@ -30,7 +30,7 @@ def test_typed_dict():
 def test_type_dict_nested():
     @register_type_alias("test_typed_dict.OldAddress")
     class Address(TypedDict):
-        street: str
+        street: Annotated[str, Alias("address")]
         number: int
 
     class User(TypedDict):
@@ -56,7 +56,7 @@ def test_type_dict_nested():
                     "aliases": ["test_typed_dict.OldAddress"],
                     "type": "record",
                     "fields": [
-                        {"name": "street", "type": "string"},
+                        {"aliases": ["address"], "name": "street", "type": "string"},
                         {"name": "number", "type": "long"},
                     ],
                 },
