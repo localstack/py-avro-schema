@@ -1,6 +1,6 @@
-from typing import TypedDict
+from typing import Annotated, TypedDict
 
-from py_avro_schema._alias import register_type_alias
+from py_avro_schema._alias import Alias, register_type_alias
 from py_avro_schema._testing import assert_schema
 
 
@@ -30,7 +30,7 @@ def test_typed_dict():
 def test_type_dict_nested():
     @register_type_alias("test_typed_dict.OldAddress")
     class Address(TypedDict):
-        street: str
+        street: Annotated[str, Alias("address")]
         number: int
 
     class User(TypedDict):
@@ -56,7 +56,7 @@ def test_type_dict_nested():
                     "aliases": ["test_typed_dict.OldAddress"],
                     "type": "record",
                     "fields": [
-                        {"name": "street", "type": "string"},
+                        {"aliases": ["address"], "name": "street", "type": "string"},
                         {"name": "number", "type": "long"},
                     ],
                 },
@@ -64,3 +64,24 @@ def test_type_dict_nested():
         ],
     }
     assert_schema(User, expected, do_auto_namespace=True)
+
+
+def test_field_alias():
+    class User(TypedDict):
+        name: Annotated[str, Alias("username")]
+        age: int
+
+    expected = {
+        "type": "record",
+        "name": "User",
+        "fields": [
+            {
+                "aliases": ["username"],
+                "name": "name",
+                "type": "string",
+            },
+            {"name": "age", "type": "long"},
+        ],
+    }
+
+    assert_schema(User, expected)

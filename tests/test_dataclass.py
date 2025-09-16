@@ -19,7 +19,7 @@ from typing import Annotated, Dict, List, Optional, Tuple
 import pytest
 
 import py_avro_schema as pas
-from py_avro_schema._alias import register_type_aliases
+from py_avro_schema._alias import Alias, register_type_aliases
 from py_avro_schema._testing import assert_schema
 
 
@@ -842,5 +842,24 @@ def test_sequence_schema_defaults_with_items():
         ],
         "name": "PyType",
         "type": "record",
+    }
+    assert_schema(PyType, expected)
+
+
+def test_field_alias():
+    @dataclasses.dataclass
+    class PyType:
+        field_b: Annotated[str, Alias("field_a")]
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "aliases": ["field_a"],
+                "name": "field_b",
+                "type": "string",
+            }
+        ],
     }
     assert_schema(PyType, expected)

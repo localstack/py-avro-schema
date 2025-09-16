@@ -50,7 +50,7 @@ import orjson
 import typeguard
 
 import py_avro_schema._typing
-from py_avro_schema._alias import get_aliases
+from py_avro_schema._alias import get_aliases, get_field_aliases_and_actual_type
 
 if TYPE_CHECKING:
     # Pydantic not necessarily required at runtime
@@ -909,6 +909,7 @@ class RecordField:
         py_type: Type,
         name: str,
         namespace: Optional[str],
+        aliases: list[str] | None = None,
         default: Any = dataclasses.MISSING,
         docs: str = "",
         options: Option = Option(0),
@@ -919,12 +920,16 @@ class RecordField:
         :param py_type:   The Python class or type
         :param name:      Field name
         :param namespace: Avro schema namespace
+        :param aliases:   Aliases for the field
         :param default:   Field default value
         :param docs:      Field documentation or description
         :param options:   Schema generation options
         """
+        if aliases is None:
+            aliases = []
         self.py_type = py_type
         self.name = name
+        self.aliases = aliases
         self._namespace = namespace
         self.default = default
         self.docs = docs
@@ -949,6 +954,8 @@ class RecordField:
             "name": self.name,
             "type": self.schema.data(names=names),
         }
+        if self.aliases:
+            field_data["aliases"] = sorted(self.aliases)
         if self.default != dataclasses.MISSING:
             field_data["default"] = self.schema.make_default(self.default)
         if self.docs and Option.NO_DOC not in self.options:
@@ -984,11 +991,13 @@ class DataclassSchema(RecordSchema):
         default = py_field.default
         if callable(py_field.default_factory):  # type: ignore
             default = py_field.default_factory()  # type: ignore
+        aliases, actual_type = get_field_aliases_and_actual_type(py_field.type)  # type: ignore
         field_obj = RecordField(
-            py_type=py_field.type,  # type: ignore
+            py_type=actual_type,  # type: ignore
             name=py_field.name,
             namespace=self.namespace_override,
             default=default,
+            aliases=aliases,
             options=self.options,
         )
 
@@ -1024,11 +1033,13 @@ class PydanticSchema(RecordSchema):
         default = dataclasses.MISSING if py_field.is_required() else py_field.get_default(call_default_factory=True)
         py_type = self._annotation(name)
         record_name = py_field.alias if Option.USE_FIELD_ALIAS in self.options and py_field.alias else name
+        aliases, actual_type = get_field_aliases_and_actual_type(py_type)
         field_obj = RecordField(
-            py_type=py_type,
+            py_type=actual_type,
             name=record_name,
             namespace=self.namespace_override,
             default=default,
+            aliases=aliases,
             docs=py_field.description or "",
             options=self.options,
         )
@@ -1087,11 +1098,13 @@ class PlainClassSchema(RecordSchema):
     def _record_field(self, py_field: inspect.Parameter) -> RecordField:
         """Return an Avro record field object for a given Python instance attribute"""
         default = py_field.default if py_field.default != inspect.Parameter.empty else dataclasses.MISSING
+        aliases, actual_type = get_field_aliases_and_actual_type(py_field.annotation)
         field_obj = RecordField(
-            py_type=py_field.annotation,
+            py_type=actual_type,
             name=py_field.name,
             namespace=self.namespace_override,
             default=default,
+            aliases=aliases,
             options=self.options,
         )
         return field_obj
@@ -1116,15 +1129,17 @@ class TypedDictSchema(RecordSchema):
         """
         super().__init__(py_type, namespace=namespace, options=options)
         py_type = _type_from_annotated(py_type)
-        self.py_fields: dict[str, Type] = get_type_hints(py_type)
+        self.py_fields: dict[str, Type] = get_type_hints(py_type, include_extras=True)
         self.record_fields = [self._record_field(field) for field in self.py_fields.items()]
 
     def _record_field(self, py_field: tuple[str, Type]) -> RecordField:
         """Return an Avro record field object for a given TypedDict field"""
+        aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
         field_obj = RecordField(
-            py_type=py_field[1],
+            py_type=actual_type,
             name=py_field[0],
             namespace=self.namespace_override,
+            aliases=aliases,
             options=self.options,
         )
         return field_obj

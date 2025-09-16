@@ -15,7 +15,7 @@ from typing import Annotated
 import pytest
 
 import py_avro_schema
-from py_avro_schema._alias import register_type_aliases
+from py_avro_schema._alias import Alias, register_type_aliases
 from py_avro_schema._testing import assert_schema
 
 
@@ -80,6 +80,25 @@ def test_plain_class_annotated():
     }
 
     assert_schema(Annotated[PyType, ...], expected)
+
+
+def test_field_alias():
+    class PyType:
+        def __init__(self, name: Annotated[str, Alias("old_name")]):
+            self.name = name
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "aliases": ["old_name"],
+                "name": "name",
+                "type": "string",
+            },
+        ],
+    }
+    assert_schema(PyType, expected)
 
 
 def test_plain_class_no_type_hints():
