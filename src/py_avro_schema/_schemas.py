@@ -1105,7 +1105,7 @@ class PlainClassSchema(RecordSchema):
             self.py_fields.append((k, v))
         # We store __init__ parameters with default values. They can be used as defaults for the record.
         self.signature_fields = {
-            param.name: param.default
+            param.name: (param.annotation, param.default)
             for param in list(inspect.signature(py_type.__init__).parameters.values())[1:]
             if param.default is not inspect._empty
         }
@@ -1115,7 +1115,11 @@ class PlainClassSchema(RecordSchema):
         """Return an Avro record field object for a given Python instance attribute"""
         aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
         name = py_field[0]
-        default = self.signature_fields.get(name, dataclasses.MISSING)
+        default = dataclasses.MISSING
+        if field := self.signature_fields.get(name):
+            _annotation, _default = field
+            if actual_type is _annotation:
+                default = _default
         field_obj = RecordField(
             py_type=actual_type,
             name=name,
