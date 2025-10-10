@@ -1064,7 +1064,15 @@ class PydanticSchema(RecordSchema):
 
 @register_schema
 class PlainClassSchema(RecordSchema):
-    """An Avro record schema for a plain Python class with typed constructor method arguments"""
+    """
+    An Avro record schema for a plain Python class with type annotations, e.g.,
+    ::
+        class MyClass:
+            var: str
+
+            def __init__(self, var: str = "foo"):
+                self.var = var
+    """
 
     @classmethod
     def handles_type(cls, py_type: Type) -> bool:
@@ -1077,13 +1085,13 @@ class PlainClassSchema(RecordSchema):
             and not hasattr(py_type, "__pydantic_private__")
             # If we are subclassing a string, used the "named string" approach
             and (inspect.isclass(py_type) and not issubclass(py_type, str))
-            # Any other class with __init__ with typed args
-            and bool(get_type_hints(py_type.__init__))
+            # and any other class with typed annotations
+            and bool(get_type_hints(py_type))
         )
 
     def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
         """
-        An Avro record schema for a plain Python class with typed constructor method arguments
+        An Avro record schema for a plain Python class with type hints
 
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
@@ -1091,17 +1099,30 @@ class PlainClassSchema(RecordSchema):
         """
         super().__init__(py_type, namespace=namespace, options=options)
         py_type = _type_from_annotated(py_type)
-        # Extracting arguments from __init__, dropping first argument `self`.
-        self.py_fields = list(inspect.signature(py_type.__init__).parameters.values())[1:]
+
+        self.py_fields: list[tuple[str, type]] = []
+        for k, v in py_type.__annotations__.items():
+            self.py_fields.append((k, v))
+        # We store __init__ parameters with default values. They can be used as defaults for the record.
+        self.signature_fields = {
+            param.name: (param.annotation, param.default)
+            for param in list(inspect.signature(py_type.__init__).parameters.values())[1:]
+            if param.default is not inspect._empty
+        }
         self.record_fields = [self._record_field(field) for field in self.py_fields]
 
-    def _record_field(self, py_field: inspect.Parameter) -> RecordField:
+    def _record_field(self, py_field: tuple[str, Type]) -> RecordField:
         """Return an Avro record field object for a given Python instance attribute"""
-        default = py_field.default if py_field.default != inspect.Parameter.empty else dataclasses.MISSING
-        aliases, actual_type = get_field_aliases_and_actual_type(py_field.annotation)
+        aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
+        name = py_field[0]
+        default = dataclasses.MISSING
+        if field := self.signature_fields.get(name):
+            _annotation, _default = field
+            if actual_type is _annotation:
+                default = _default
         field_obj = RecordField(
             py_type=actual_type,
-            name=py_field.name,
+            name=name,
             namespace=self.namespace_override,
             default=default,
             aliases=aliases,

@@ -24,6 +24,11 @@ def test_plain_class_with_type_hints():
     class PyType:
         """A port, not using dataclass"""
 
+        name: str
+        country: str
+        latitude: float
+        longitude: float
+
         def __init__(
             self, name: str, *, country: str = "NLD", latitude: float, longitude: float
         ):  # note the non-default kwargs near the end!
@@ -65,6 +70,8 @@ def test_plain_class_annotated():
     class PyType:
         """A port, not using dataclass"""
 
+        name: str
+
         def __init__(self, name: str):
             self.name = name
 
@@ -84,7 +91,9 @@ def test_plain_class_annotated():
 
 def test_field_alias():
     class PyType:
-        def __init__(self, name: Annotated[str, Alias("old_name")]):
+        name: Annotated[str, Alias("old_name")]
+
+        def __init__(self, name):
             self.name = name
 
     expected = {
@@ -105,7 +114,9 @@ def test_plain_class_no_type_hints():
     class PyType:
         """A port, not using dataclass"""
 
-        def __init__(self, name, *, country="NLD", latitude, longitude):  # note the non-default kwargs near the end!
+        def __init__(
+            self, name: str, *, country: str = "NLD", latitude: float, longitude: float
+        ):  # note the non-default kwargs near the end!
             self.name = name
             self.country = country.upper()
             self.latitude = latitude
