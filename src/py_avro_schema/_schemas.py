@@ -845,25 +845,33 @@ class EnumSchema(NamedSchema):
         if symbol_types != {str}:
             raise TypeError(f"Avro enum schema members must be strings. {py_type} uses {symbol_types} values.")
 
+    def _is_valid_enum(self) -> bool:
+        """Checks if all the symbols of the enum are valid Avro names."""
+        try:
+            for _symbol in self.symbols:
+                avro.name.validate_basename(_symbol)
+        except InvalidName:
+            return False
+        return True
+
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
         """Return the schema data"""
-        enum_schema = {
-            "type": "enum",
-            "name": self.name,
-            "symbols": self.symbols,
-            # This is the default for the enum, not the default value for a record field using the enum type! See Avro
-            # schema specification for use. For now, we force the default value to be the first symbol. This means that
-            # if the writer schema has an additional member that the reader schema does NOT have, the reader will simply
-            # and silently assume the default specified here. Now that may not always be what we want, but standard lib
-            # Python enums don't really have a way to specify this.
-            "default": self.symbols[0],
-        }
-
-        # Special case for StrEnum might contain invalid avro names. We just use a StrSubclassSchema schema instead.
-        try:
-            [avro.name.validate_basename(_symbol) for _symbol in self.symbols]  # type: ignore[func-returns-value]
-        except InvalidName:
+        if not self._is_valid_enum():
+            # Special case for StrEnum might contain invalid avro names. We just use a StrSubclassSchema schema instead.
             enum_schema = {"type": "string", "namedString": self.name}
+        else:
+            enum_schema = {
+                "type": "enum",
+                "name": self.name,
+                "symbols": self.symbols,
+                # This is the default for the enum, not the default value for a record field using the enum type!
+                # See Avro schema specification for use. For now, we force the default value to be the first symbol.
+                # This means that if the writer schema has an additional member that the reader schema does NOT have,
+                # the reader will simply and silently assume the default specified here.
+                # Now that may not always be what we want, but standard lib Python enums don't really have a way
+                # to specify this.
+                "default": self.symbols[0],
+            }
         if self.namespace is not None:
             enum_schema["namespace"] = self.namespace
             fqn = f"{self.namespace}.{self.name}"
