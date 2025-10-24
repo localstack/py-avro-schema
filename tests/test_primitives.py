@@ -508,3 +508,14 @@ def test_enum_docs():
         "default": "RED",
     }
     assert_schema(PyType, expected, do_doc=True)
+
+
+def test_str_enum_invalid_name():
+    class OriginProtocolPolicy(str, enum.Enum):
+        http_only = "http-only"
+        match_viewer = "match-viewer"
+        https_only = "https-only"
+
+    expected = {"namedString": "OriginProtocolPolicy", "type": "string"}
+
+    assert_schema(OriginProtocolPolicy, expected)
