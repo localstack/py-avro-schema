@@ -45,9 +45,11 @@ from typing import (
     get_type_hints,
 )
 
+import avro.name
 import more_itertools
 import orjson
 import typeguard
+from avro.errors import InvalidName
 
 import py_avro_schema._typing
 from py_avro_schema._alias import get_aliases, get_field_aliases_and_actual_type
@@ -856,6 +858,12 @@ class EnumSchema(NamedSchema):
             # Python enums don't really have a way to specify this.
             "default": self.symbols[0],
         }
+
+        # Special case for StrEnum might contain invalid avro names. We just use a StrSubclassSchema schema instead.
+        try:
+            [avro.name.validate_basename(_symbol) for _symbol in self.symbols]  # type: ignore[func-returns-value]
+        except InvalidName:
+            enum_schema = {"type": "string", "namedString": self.name}
         if self.namespace is not None:
             enum_schema["namespace"] = self.namespace
             fqn = f"{self.namespace}.{self.name}"
