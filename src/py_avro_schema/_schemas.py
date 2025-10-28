@@ -154,7 +154,7 @@ def register_schema(cls: type | None = None, *, priority: int = 0):
 
     def _wrapper(_cls):
         """Wrapper function to attach priority and sort the list of schemas."""
-        _cls.__priority = priority
+        _cls.__py_avro_priority = priority
         _SCHEMA_CLASSES.append(_cls)
         return _cls
 
@@ -194,7 +194,7 @@ def _schema_obj(py_type: Type, namespace: Optional[str] = None, options: Option 
     :param options:   Schema generation options.
     """
     # Find concrete Schema subclasses defined in the current module
-    for schema_class in sorted(_SCHEMA_CLASSES, key=lambda c: getattr(c, "__priority", 0), reverse=True):
+    for schema_class in sorted(_SCHEMA_CLASSES, key=lambda c: getattr(c, "__py_avro_priority", 0)):
         # Find the first schema class that handles py_type
         schema_obj = schema_class(py_type, namespace=namespace, options=options)  # type: ignore
         if schema_obj:
