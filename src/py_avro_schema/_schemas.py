@@ -137,9 +137,10 @@ JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_
 _SCHEMA_CLASSES = []
 
 
-def register_schema(cls):
+def register_schema(cls: type | None = None, *, priority: int = 0):
     """
     Decorator to register a class as a known ``Schema``
+    It also accept a priority value to sort the list of schemas. Default schema have 0 priority.
 
     Schema classes are instantiated when calling ``schema``. Example use::
 
@@ -149,10 +150,17 @@ def register_schema(cls):
           def handles_type(cls, py_type: Type) -> bool:
               ...
           ...
-
     """
-    _SCHEMA_CLASSES.append(cls)
-    return cls
+
+    def _wrapper(_cls):
+        """Wrapper function to attach priority and sort the list of schemas."""
+        _cls.__priority = priority
+        _SCHEMA_CLASSES.append(_cls)
+        # Sorting at every addition is not very nice, but we do have few schemas, and we record them once.
+        _SCHEMA_CLASSES.sort(key=lambda c: getattr(c, "__priority", 0), reverse=True)
+        return _cls
+
+    return _wrapper if not cls else _wrapper(cls)
 
 
 def schema(
