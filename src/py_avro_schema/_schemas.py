@@ -140,7 +140,7 @@ _SCHEMA_CLASSES = []
 def register_schema(cls: type | None = None, *, priority: int = 0):
     """
     Decorator to register a class as a known ``Schema``
-    It also accept a priority value to sort the list of schemas. Default schema have 0 priority.
+    It also accept a priority value to sort the list of schemas. Default schemas have priority 0.
 
     Schema classes are instantiated when calling ``schema``. Example use::
 
