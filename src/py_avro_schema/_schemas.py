@@ -137,9 +137,10 @@ JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_
 _SCHEMA_CLASSES = []
 
 
-def register_schema(cls):
+def register_schema(cls: type | None = None, *, priority: int = 0):
     """
     Decorator to register a class as a known ``Schema``
+    It also accept a priority value to sort the list of schemas. Default schemas have priority 0.
 
     Schema classes are instantiated when calling ``schema``. Example use::
 
@@ -149,10 +150,15 @@ def register_schema(cls):
           def handles_type(cls, py_type: Type) -> bool:
               ...
           ...
-
     """
-    _SCHEMA_CLASSES.append(cls)
-    return cls
+
+    def _wrapper(_cls):
+        """Wrapper function to attach priority and sort the list of schemas."""
+        _cls.__py_avro_priority = priority
+        _SCHEMA_CLASSES.append(_cls)
+        return _cls
+
+    return _wrapper if not cls else _wrapper(cls)
 
 
 def schema(
@@ -188,7 +194,7 @@ def _schema_obj(py_type: Type, namespace: Optional[str] = None, options: Option 
     :param options:   Schema generation options.
     """
     # Find concrete Schema subclasses defined in the current module
-    for schema_class in _SCHEMA_CLASSES:
+    for schema_class in sorted(_SCHEMA_CLASSES, key=lambda c: getattr(c, "__py_avro_priority", 0)):
         # Find the first schema class that handles py_type
         schema_obj = schema_class(py_type, namespace=namespace, options=options)  # type: ignore
         if schema_obj:
