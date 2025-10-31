@@ -8,7 +8,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
-
+import dataclasses
 import enum
 import re
 import sys
@@ -519,3 +519,25 @@ def test_str_enum_invalid_name():
     expected = {"namedString": "OriginProtocolPolicy", "type": "string"}
 
     assert_schema(OriginProtocolPolicy, expected)
+
+
+def test_duplicated_invalid_enum():
+    class OriginProtocolPolicy(str, enum.Enum):
+        http_only = "http-only"
+        match_viewer = "match-viewer"
+        https_only = "https-only"
+
+    @dataclasses.dataclass
+    class PyType:
+        enum_one: OriginProtocolPolicy
+        enum_two: OriginProtocolPolicy
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {"type": {"type": "string", "namedString": "OriginProtocolPolicy"}, "name": "enum_one"},
+            {"type": {"type": "string", "namedString": "OriginProtocolPolicy"}, "name": "enum_two"},
+        ],
+    }
+    assert_schema(PyType, expected)
