@@ -860,6 +860,13 @@ class EnumSchema(NamedSchema):
             return False
         return True
 
+    def data(self, names: NamesType) -> JSONType:
+        """Return the schema data"""
+        # For invalid enums we don't want to deduplicate the data
+        if not self._is_valid_enum():
+            return self.data_before_deduplication(names=names)
+        return super().data(names)
+
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
         """Return the schema data"""
         if not self._is_valid_enum():
