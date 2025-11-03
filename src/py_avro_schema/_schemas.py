@@ -1148,7 +1148,7 @@ class PlainClassSchema(RecordSchema):
         if field := self.signature_fields.get(name):
             _annotation, _default = field
             if actual_type is _annotation:
-                default = _default
+                default = _default or dataclasses.MISSING
         field_obj = RecordField(
             py_type=actual_type,
             name=name,
