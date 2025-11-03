@@ -672,6 +672,33 @@ class SequenceSchema(Schema):
 
 
 @register_schema
+class SetSchema(SequenceSchema):
+    """An Avro array schema for a given Python set"""
+
+    @classmethod
+    def handles_type(cls, py_type: type) -> bool:
+        """Whether this schema class can represent a given Python class"""
+        py_type = _type_from_annotated(py_type)
+        origin = get_origin(py_type)
+        return _is_class(origin, collections.abc.MutableSet)
+
+    def __init__(
+        self,
+        py_type: type[collections.abc.MutableSet],
+        namespace: str | None = None,
+        options: Option = Option(0),
+    ):
+        """
+        An Avro array schema for a given Python sequence
+
+        :param py_type:   The Python class to generate a schema for.
+        :param namespace: The Avro namespace to add to schemas.
+        :param options:   Schema generation options.
+        """
+        super().__init__(py_type, namespace=namespace, options=options)  # type: ignore
+
+
+@register_schema
 class DictSchema(Schema):
     """An Avro map schema for a given Python mapping"""
 

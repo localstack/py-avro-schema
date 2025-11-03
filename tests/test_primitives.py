@@ -174,6 +174,12 @@ def test_string_list():
     assert_schema(py_type, expected)
 
 
+def test_string_set():
+    py_type = set[str]
+    expected = {"type": "array", "items": "string"}
+    assert_schema(py_type, expected)
+
+
 def test_string_list_annotated():
     py_type = Annotated[List[str], ...]
     expected = {"type": "array", "items": "string"}
@@ -188,6 +194,12 @@ def test_string_list_lower_list():
 
 def test_int_list():
     py_type = List[int]
+    expected = {"type": "array", "items": "long"}
+    assert_schema(py_type, expected)
+
+
+def test_int_set():
+    py_type = set[int]
     expected = {"type": "array", "items": "long"}
     assert_schema(py_type, expected)
 
@@ -211,6 +223,18 @@ def test_string_sequence():
 def test_string_mutable_sequence():
     py_type = MutableSequence[str]
     expected = {"type": "array", "items": "string"}
+    assert_schema(py_type, expected)
+
+
+def test_string_set_of_set():
+    py_type = set[set[str]]
+    expected = {
+        "type": "array",
+        "items": {
+            "type": "array",
+            "items": "string",
+        },
+    }
     assert_schema(py_type, expected)
 
 
