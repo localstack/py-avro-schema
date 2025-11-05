@@ -15,7 +15,7 @@ from typing import Annotated
 import pytest
 
 import py_avro_schema
-from py_avro_schema._alias import Alias, register_type_aliases
+from py_avro_schema._alias import Alias, Opaque, register_type_aliases
 from py_avro_schema._testing import assert_schema
 
 
@@ -130,3 +130,16 @@ def test_plain_class_no_type_hints():
         ),
     ):
         assert_schema(PyType, {})
+
+
+def test_opaque_field():
+    class Details:
+        name: str
+        surname: str
+        age: int
+
+    class PyType:
+        details: Annotated[Details, Opaque]
+
+    expected = {"fields": [{"name": "details", "type": "string"}], "name": "PyType", "type": "record"}
+    assert_schema(PyType, expected)

@@ -29,6 +29,14 @@ class Aliases:
     aliases: list[str]
 
 
+class Opaque:
+    """
+    This is a marker for complex Avro fields (e.g., maps) that are serialized to a simple string.
+    """
+
+    pass
+
+
 def get_fully_qualified_name(py_type: type) -> str:
     """Returns the fully qualified name for a Python type"""
     module = getattr(py_type, "__module__", None)
@@ -106,6 +114,11 @@ def get_field_aliases_and_actual_type(py_type: Type) -> tuple[list[str] | None, 
 
     args = get_args(py_type)
     actual_type, annotation = args[0], args[1]
+
+    # When a field is annotated with the Opaque class, we return bytes as type.
+    #   The object serializer is responsible for dumping the entire attribute as a JSON string
+    if isinstance(annotation, type) and issubclass(annotation, Opaque):
+        return [], str
 
     # Annotated type but not an alias. We do nothing.
     if type(annotation) not in (Alias, Aliases):
