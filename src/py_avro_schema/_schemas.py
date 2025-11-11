@@ -387,7 +387,10 @@ class FinalSchema(Schema):
         """An Avro schema for Python ``typing.Final``"""
         super().__init__(py_type, namespace, options)
         py_type = _type_from_annotated(py_type)
-        real_type = get_args(py_type)[0]
+        try:
+            real_type = get_args(py_type)[0]
+        except IndexError:
+            raise TypeError("Can't generate Avro schema from Python typing.Final without a type parameter")
         self.real_schema = _schema_obj(real_type, namespace=namespace, options=options)
 
     def data(self, names: NamesType) -> JSONType:
@@ -398,7 +401,7 @@ class FinalSchema(Schema):
     def handles_type(cls, py_type: Type) -> bool:
         """Whether this schema class can represent a given Python class"""
         py_type = _type_from_annotated(py_type)
-        return get_origin(py_type) is Final
+        return get_origin(py_type) is Final or py_type is Final
 
 
 @register_schema
