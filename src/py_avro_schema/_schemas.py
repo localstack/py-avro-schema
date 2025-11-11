@@ -33,6 +33,7 @@ from typing import (
     Annotated,
     Any,
     Dict,
+    Final,
     ForwardRef,
     List,
     Literal,
@@ -376,6 +377,28 @@ class LiteralSchema(Schema):
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
         return self.literal_value_schema.data(names=names)
+
+
+@register_schema
+class FinalSchema(Schema):
+    """An Avro schema for Python ``typing.Final``"""
+
+    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+        """An Avro schema for Python ``typing.Final``"""
+        super().__init__(py_type, namespace, options)
+        py_type = _type_from_annotated(py_type)
+        real_type = get_args(py_type)[0]
+        self.real_schema = _schema_obj(real_type, namespace=namespace, options=options)
+
+    def data(self, names: NamesType) -> JSONType:
+        """Return the schema data"""
+        return self.real_schema.data(names=names)
+
+    @classmethod
+    def handles_type(cls, py_type: Type) -> bool:
+        """Whether this schema class can represent a given Python class"""
+        py_type = _type_from_annotated(py_type)
+        return get_origin(py_type) is Final
 
 
 @register_schema

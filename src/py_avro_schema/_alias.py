@@ -7,7 +7,7 @@ Decorators will modify this state when applied to classes.
 
 import dataclasses
 from collections import defaultdict
-from typing import Annotated, Final, Type, get_args, get_origin
+from typing import Annotated, Type, get_args, get_origin
 
 FQN = str
 """Fully qualified name for a Python type"""
@@ -108,10 +108,6 @@ def get_field_aliases_and_actual_type(py_type: Type) -> tuple[list[str] | None, 
     Check if a type contains an alias metadata via `Alias` or `Aliases` as metadata.
     It returns the eventual aliases and the type.
     """
-
-    if get_origin(py_type) is Final:
-        return [], get_args(py_type)[0]
-
     # py_type is not annotated. It can't have aliases
     if get_origin(py_type) is not Annotated:
         return [], py_type
