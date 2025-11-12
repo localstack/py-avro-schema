@@ -157,5 +157,5 @@ def test_type_aliases():
 def test_type_aliases_future():
     from py_avro_schema._testing import PyClass
 
-    expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyType", "type": "record"}
+    expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyClass", "type": "record"}
     assert_schema(PyClass, expected)
