@@ -18,7 +18,6 @@ import py_avro_schema
 from py_avro_schema._alias import Alias, Opaque, register_type_aliases
 from py_avro_schema._testing import assert_schema
 
-
 def test_plain_class_with_type_hints():
     @register_type_aliases(aliases=["test_plain_class.OldPyType"])
     class PyType:
@@ -143,3 +142,20 @@ def test_opaque_field():
 
     expected = {"fields": [{"name": "details", "type": "string"}], "name": "PyType", "type": "record"}
     assert_schema(PyType, expected)
+
+
+def test_type_aliases():
+    Name = str
+
+    class PyClass:
+        name: Name
+
+    expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyClass", "type": "record"}
+    assert_schema(PyClass, expected)
+
+
+def test_type_aliases_future():
+    from py_avro_schema._testing import PyClass
+
+    expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyType", "type": "record"}
+    assert_schema(PyClass, expected)

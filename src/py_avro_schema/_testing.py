@@ -13,6 +13,8 @@
 """
 Test functions
 """
+from __future__ import annotations
+
 import dataclasses
 import difflib
 from typing import Dict, Type, Union
@@ -57,3 +59,10 @@ class PyType:
     """For testing"""
 
     field_a: str
+
+Name = str
+
+class PyClass:
+    """For testing"""
+
+    name: Name
