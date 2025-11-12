@@ -1156,8 +1156,13 @@ class PlainClassSchema(RecordSchema):
         super().__init__(py_type, namespace=namespace, options=options)
         py_type = _type_from_annotated(py_type)
 
+        # Try to get resolved type hints, but fall back to raw annotations if there are unresolved forward refs
+        try:
+            type_hints = get_type_hints(py_type, include_extras=True)
+        except NameError:
+            type_hints = py_type.__annotations__
         self.py_fields: list[tuple[str, type]] = []
-        for k, v in py_type.__annotations__.items():
+        for k, v in type_hints.items():
             self.py_fields.append((k, v))
         # We store __init__ parameters with default values. They can be used as defaults for the record.
         self.signature_fields = {

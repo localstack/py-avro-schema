@@ -143,3 +143,20 @@ def test_opaque_field():
 
     expected = {"fields": [{"name": "details", "type": "string"}], "name": "PyType", "type": "record"}
     assert_schema(PyType, expected)
+
+
+def test_type_aliases():
+    Name = str
+
+    class PyClass:
+        name: Name
+
+    expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyClass", "type": "record"}
+    assert_schema(PyClass, expected)
+
+
+def test_type_aliases_future():
+    from tests.models.forward import PyClass
+
+    expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyClass", "type": "record"}
+    assert_schema(PyClass, expected)
