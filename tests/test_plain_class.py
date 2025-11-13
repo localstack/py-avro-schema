@@ -10,7 +10,7 @@
 # specific language governing permissions and limitations under the License.
 
 import re
-from typing import Annotated
+from typing import Annotated, Final
 
 import pytest
 
@@ -160,3 +160,22 @@ def test_type_aliases_future():
 
     expected = {"fields": [{"name": "name", "type": "string"}], "name": "PyClass", "type": "record"}
     assert_schema(PyClass, expected)
+
+
+def test_typing_final():
+
+    class PyType:
+        var: Final[str]
+        field: Final[dict[str, int]]
+
+        def __init__(self):
+            self.var = "Hello World"
+            self.field = {"John": 123}
+
+    expected = {
+        "fields": [{"name": "var", "type": "string"}, {"name": "field", "type": {"type": "map", "values": "long"}}],
+        "name": "PyType",
+        "type": "record",
+    }
+
+    assert_schema(PyType, expected)
