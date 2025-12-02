@@ -1168,6 +1168,8 @@ class PlainClassSchema(RecordSchema):
             not dataclasses.is_dataclass(py_type)
             # Pydantic models are handled above
             and not hasattr(py_type, "__pydantic_private__")
+            # typed_dict handled separately
+            and not is_typeddict(py_type)
             # If we are subclassing a string, used the "named string" approach
             and (inspect.isclass(py_type) and not issubclass(py_type, str))
             # and any other class with typed annotations
@@ -1240,12 +1242,21 @@ class TypedDictSchema(RecordSchema):
         """
         super().__init__(py_type, namespace=namespace, options=options)
         py_type = _type_from_annotated(py_type)
+        self.is_total = py_type.__dict__.get("__total__", True)
         self.py_fields: dict[str, Type] = get_type_hints(py_type, include_extras=True)
         self.record_fields = [self._record_field(field) for field in self.py_fields.items()]
 
     def _record_field(self, py_field: tuple[str, Type]) -> RecordField:
         """Return an Avro record field object for a given TypedDict field"""
         aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
+
+        if not self.is_total:
+            # If a TypedDict is marked as total=None, it does not need to contain all the field. However, we need to
+            # be able to distinguish between the fields that are missing from the ones that are present but set to None.
+            # To do that, we extend the original type with str. We will later add a special string (e.g., __td_missing__)
+            # as a marker at deserialization time.
+            actual_type = Union[actual_type, str]
+
         field_obj = RecordField(
             py_type=actual_type,
             name=py_field[0],

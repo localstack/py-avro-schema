@@ -85,3 +85,24 @@ def test_field_alias():
     }
 
     assert_schema(User, expected)
+
+
+def test_non_total_typed_dict():
+
+    class PyType(TypedDict, total=False):
+        name: str
+        age: int | None
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "name",
+                "type":"string",
+            },
+            {"name": "age", "type": ["long", "null", "string"]},
+        ]
+    }
+    assert_schema(PyType, expected)
+
