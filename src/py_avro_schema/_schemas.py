@@ -131,6 +131,12 @@ class Option(enum.Flag):
     #: See https://docs.pydantic.dev/dev/api/fields/#pydantic.fields.Field
     USE_FIELD_ALIAS = enum.auto()
 
+    #: TypedDict marked with ``total=False`` are valid structures when a field is missing. When of the field is also
+    # optional, we need to have a way to distinguish between a `None` and a non-set field. With this option, the type
+    # of each field is extended with `string`. This way, clients can add markers (e.g., `__td_missing__`) to discern
+    # the two cases.
+    MARK_NON_TOTAL_TYPED_DICTS = enum.auto()
+
 
 JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_")]
 
@@ -1261,7 +1267,7 @@ class TypedDictSchema(RecordSchema):
         """Return an Avro record field object for a given TypedDict field"""
         aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
 
-        if not self.is_total:
+        if Option.MARK_NON_TOTAL_TYPED_DICTS in self.options and not self.is_total:
             # If a TypedDict is marked as total=None, it does not need to contain all the field. However, we need to
             # be able to distinguish between the fields that are missing from the ones that are present but set to None.
             # To do that, we extend the original type with str. We will later add a special string

@@ -1,6 +1,7 @@
 from enum import StrEnum
 from typing import Annotated, TypedDict
 
+import py_avro_schema as pas
 from py_avro_schema._alias import Alias, register_type_alias
 from py_avro_schema._testing import assert_schema
 
@@ -109,4 +110,4 @@ def test_non_total_typed_dict():
             {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
         ],
     }
-    assert_schema(PyType, expected)
+    assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
