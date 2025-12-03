@@ -804,7 +804,18 @@ class UnionSchema(Schema):
         schemas = (item_schema.data(names=names) for item_schema in self.item_schemas)
         # We need to deduplicate the schemas **after** rendering. This is because **different** Python types might
         # result in the **same** Avro schema. Preserving order as order may be significant in an Avro schema.
-        unique_schemas = list(more_itertools.unique_everseen(schemas))
+
+        def normalize_string_duplicates(_schema):
+            """We might have cases in which we have a schema both for ``StrSubclassSchema`` (e.g., a ``StrEnum`` with
+            invalid names is represented as a ``StrSubclassSchema``) and a string. These are technically duplicates,
+            but ``unique_everseen`` won't remove them by default."""
+            if _schema == "string":
+                return "string"
+            elif isinstance(_schema, dict) and _schema.get("type") == "string":
+                return "string"
+            return _schema
+
+        unique_schemas = list(more_itertools.unique_everseen(schemas, key=normalize_string_duplicates))
         if len(unique_schemas) > 1:
             return unique_schemas
         else:
@@ -1253,9 +1264,9 @@ class TypedDictSchema(RecordSchema):
         if not self.is_total:
             # If a TypedDict is marked as total=None, it does not need to contain all the field. However, we need to
             # be able to distinguish between the fields that are missing from the ones that are present but set to None.
-            # To do that, we extend the original type with str. We will later add a special string (e.g., __td_missing__)
-            # as a marker at deserialization time.
-            actual_type = Union[actual_type, str]
+            # To do that, we extend the original type with str. We will later add a special string
+            # (e.g., __td_missing__) as a marker at deserialization time.
+            actual_type = Union[actual_type, str]  # type: ignore
 
         field_obj = RecordField(
             py_type=actual_type,

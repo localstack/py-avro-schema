@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import Annotated, TypedDict
 
 from py_avro_schema._alias import Alias, register_type_alias
@@ -88,10 +89,13 @@ def test_field_alias():
 
 
 def test_non_total_typed_dict():
+    class Opt(StrEnum):
+        val = "invalid-val"
 
     class PyType(TypedDict, total=False):
         name: str
         age: int | None
+        opt: Opt | None
 
     expected = {
         "type": "record",
@@ -99,10 +103,10 @@ def test_non_total_typed_dict():
         "fields": [
             {
                 "name": "name",
-                "type":"string",
+                "type": "string",
             },
             {"name": "age", "type": ["long", "null", "string"]},
-        ]
+            {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
+        ],
     }
     assert_schema(PyType, expected)
-
