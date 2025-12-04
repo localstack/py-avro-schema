@@ -405,7 +405,7 @@ class FinalSchema(Schema):
 
 
 @register_schema
-class DictAsJSONSchema(Schema):
+class TypeAsJSONSchema(Schema):
     """
     An Avro string schema representing a Python Dict[str, Any], List[Dict[str, Any]] or List[Any] assuming
     JSON serialization
