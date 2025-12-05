@@ -95,6 +95,7 @@ def test_non_total_typed_dict():
 
     class PyType(TypedDict, total=False):
         name: str
+        nickname: str | None
         age: int | None
         opt: Opt | None
 
@@ -106,6 +107,7 @@ def test_non_total_typed_dict():
                 "name": "name",
                 "type": "string",
             },
+            {"name": "nickname", "type": ["string", "null"]},
             {"name": "age", "type": ["long", "null", "string"]},
             {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
         ],
