@@ -405,13 +405,16 @@ class FinalSchema(Schema):
 
 
 @register_schema
-class DictAsJSONSchema(Schema):
-    """An Avro string schema representing a Python Dict[str, Any] or List[Dict[str, Any]] assuming JSON serialization"""
+class TypeAsJSONSchema(Schema):
+    """
+    An Avro string schema representing a Python Dict[str, Any], List[Dict[str, Any]] or List[Any] assuming
+    JSON serialization
+    """
 
     @classmethod
     def handles_type(cls, py_type: Type) -> bool:
         """Whether this schema class can represent a given Python class"""
-        return _is_dict_str_any(py_type) or _is_list_dict_str_any(py_type)
+        return is_logically_json(py_type)
 
     def data(self, names: NamesType) -> JSONObj:
         """Return the schema data"""
@@ -1278,6 +1281,17 @@ def _is_list_dict_str_any(py_type: Type) -> bool:
         return inspect.isclass(origin) and issubclass(origin, list) and _is_dict_str_any(args[0])
     else:
         return False
+
+
+def _is_list_any(py_type: Type) -> bool:
+    """Return whether a given type is ``List[Any]``"""
+    origin = get_origin(py_type)
+    return inspect.isclass(origin) and issubclass(origin, list) and get_args(py_type) == (Any,)
+
+
+def is_logically_json(py_type: Type) -> bool:
+    """Returns whether a given type is logically a JSON and can be serialized as such"""
+    return _is_list_any(py_type) or _is_list_dict_str_any(py_type) or _is_dict_str_any(py_type)
 
 
 def _is_class(py_type: Any, of_types: Union[Type, Tuple[Type, ...]], include_subclasses: bool = True) -> bool:

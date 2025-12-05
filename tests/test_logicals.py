@@ -285,3 +285,9 @@ def test_list_json_logical_bytes_field():
         "logicalType": "json",
     }
     assert_schema(py_type, expected)
+
+
+def test_list_json_logical_list_any():
+    py_type = List[Any]
+    expected = {"type": "bytes", "logicalType": "json"}
+    assert_schema(py_type, expected)
