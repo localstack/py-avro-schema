@@ -1,5 +1,7 @@
+from enum import StrEnum
 from typing import Annotated, TypedDict
 
+import py_avro_schema as pas
 from py_avro_schema._alias import Alias, register_type_alias
 from py_avro_schema._testing import assert_schema
 
@@ -85,3 +87,29 @@ def test_field_alias():
     }
 
     assert_schema(User, expected)
+
+
+def test_non_total_typed_dict():
+    class Opt(StrEnum):
+        val = "invalid-val"
+
+    class PyType(TypedDict, total=False):
+        name: str
+        nickname: str | None
+        age: int | None
+        opt: Opt | None
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "name",
+                "type": "string",
+            },
+            {"name": "nickname", "type": ["string", "null"]},
+            {"name": "age", "type": ["long", "null", "string"]},
+            {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
