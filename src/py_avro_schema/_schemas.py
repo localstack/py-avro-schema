@@ -26,6 +26,7 @@ import inspect
 import re
 import sys
 import types
+import typing
 import uuid
 from enum import StrEnum
 from typing import (
@@ -179,6 +180,7 @@ def schema(
     namespace: Optional[str] = None,
     names: Optional[NamesType] = None,
     options: Option = Option(0),
+    processing: set[type] | None = None,
 ) -> JSONType:
     """
     Generate and return an Avro schema for a given Python type
@@ -193,12 +195,17 @@ def schema(
     """
     if names is None:
         names = []
-    schema_obj = _schema_obj(py_type, namespace=namespace, options=options)
+    schema_obj = _schema_obj(py_type, namespace=namespace, options=options, processing=processing)
     schema_data = schema_obj.data(names=names)
     return schema_data
 
 
-def _schema_obj(py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)) -> "Schema":
+def _schema_obj(
+    py_type: Type,
+    namespace: Optional[str] = None,
+    options: Option = Option(0),
+    processing: set[type] | None = None,
+) -> "Schema":
     """
     Dispatch to relevant schema classes
 
@@ -206,10 +213,11 @@ def _schema_obj(py_type: Type, namespace: Optional[str] = None, options: Option 
     :param namespace: The Avro namespace to add to schemas.
     :param options:   Schema generation options.
     """
+    processing = processing or set()
     # Find concrete Schema subclasses defined in the current module
     for schema_class in sorted(_SCHEMA_CLASSES, key=lambda c: getattr(c, "__py_avro_priority", 0)):
         # Find the first schema class that handles py_type
-        schema_obj = schema_class(py_type, namespace=namespace, options=options)  # type: ignore
+        schema_obj = schema_class(py_type, namespace=namespace, options=options, processing=processing)  # type: ignore
         if schema_obj:
             return schema_obj
     raise TypeNotSupportedError(f"Cannot generate Avro schema for Python type {py_type}")
@@ -229,7 +237,13 @@ def validate_name(value: str) -> str:
 class Schema(abc.ABC):
     """Schema base"""
 
-    def __new__(cls, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __new__(
+        cls,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         Create an instance of this schema class if it handles py_type
 
@@ -242,17 +256,25 @@ class Schema(abc.ABC):
         else:
             return None
 
-    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         A schema base
 
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
+        :param processing: Internal parameter to track types currently being processed (for circular dependencies).
         """
         self.py_type = py_type
         self.options = options
         self._namespace = namespace  # Namespace override
+        self.processing = processing or set()
 
     @property
     def namespace_override(self) -> Optional[str]:
@@ -361,7 +383,13 @@ class StrSubclassSchema(Schema):
 class LiteralSchema(Schema):
     """An Avro schema of any type for a Python Literal type, e.g. ``Literal[""]``"""
 
-    def __init__(self, py_type: Type[Any], namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type[Any],
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        **kwargs,
+    ):
         """
         An Avro schema of any type for a Python Literal type, e.g. ``Literal[""]``
 
@@ -395,7 +423,13 @@ class LiteralSchema(Schema):
 class FinalSchema(Schema):
     """An Avro schema for Python ``typing.Final``"""
 
-    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        **kwargs,
+    ):
         """An Avro schema for Python ``typing.Final``"""
         super().__init__(py_type, namespace, options)
         py_type = _type_from_annotated(py_type)
@@ -684,6 +718,7 @@ class SequenceSchema(Schema):
         py_type: Type[collections.abc.MutableSequence],
         namespace: Optional[str] = None,
         options: Option = Option(0),
+        **kwargs,
     ):
         """
         An Avro array schema for a given Python sequence
@@ -728,6 +763,7 @@ class SetSchema(SequenceSchema):
         py_type: type[collections.abc.MutableSet],
         namespace: str | None = None,
         options: Option = Option(0),
+        **kwargs,
     ):
         """
         An Avro array schema for a given Python sequence
@@ -757,6 +793,7 @@ class DictSchema(Schema):
         py_type: Type[collections.abc.MutableMapping],
         namespace: Optional[str] = None,
         options: Option = Option(0),
+        processing: set[type] | None = None,
     ):
         """
         An Avro map schema for a given Python mapping
@@ -764,8 +801,9 @@ class DictSchema(Schema):
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
+        :param processing: Internal parameter to track types currently being processed (for circular dependencies).
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
         args = get_args(py_type)
         if args[0] != str and not issubclass(args[0], StrEnum):
@@ -797,7 +835,13 @@ class UnionSchema(Schema):
             return origin == Union or origin == union_type
         return origin == Union
 
-    def __init__(self, py_type: Type[Union[Any]], namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type[Union[Any]],
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        **kwargs,
+    ):
         """
         An Avro union schema for a given Python union type
 
@@ -859,7 +903,13 @@ class UnionSchema(Schema):
 class NamedSchema(Schema):
     """A named Avro schema base class"""
 
-    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         A named Avro schema base class
 
@@ -867,7 +917,7 @@ class NamedSchema(Schema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
         self.name = py_type.__name__
 
@@ -915,7 +965,13 @@ class EnumSchema(NamedSchema):
         """Whether this schema class can represent a given Python class"""
         return _is_class(py_type, enum.Enum)
 
-    def __init__(self, py_type: Type[enum.Enum], namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type[enum.Enum],
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        **kwargs,
+    ):
         """
         An Avro enum schema for a Python enum with string values
 
@@ -981,15 +1037,25 @@ class EnumSchema(NamedSchema):
 class RecordSchema(NamedSchema):
     """An Avro record schema base class"""
 
-    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         An Avro record schema base class
 
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
+        :param processing: Internal parameter to track types currently being processed (for circular dependencies).
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
+        self.processing = processing or set()
+        # Add this type to the processing set to detect circular dependencies
+        self.processing.add(py_type)
         self.record_fields: collections.abc.Sequence[RecordField] = []
 
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
@@ -1008,6 +1074,7 @@ class RecordSchema(NamedSchema):
             doc = _doc_for_class(self.py_type)
             if doc:
                 record_schema["doc"] = doc
+        self.processing.discard(self.py_type)
         return record_schema
 
 
@@ -1023,6 +1090,7 @@ class RecordField:
         default: Any = dataclasses.MISSING,
         docs: str = "",
         options: Option = Option(0),
+        processing: set[type] | None = None,
     ):
         """
         An Avro record field
@@ -1035,6 +1103,8 @@ class RecordField:
         :param docs:      Field documentation or description
         :param options:   Schema generation options
         """
+        if processing is None:
+            processing = set()
         if aliases is None:
             aliases = []
         self.py_type = py_type
@@ -1044,7 +1114,14 @@ class RecordField:
         self.default = default
         self.docs = docs
         self.options = options
-        self.schema = _schema_obj(self.py_type, namespace=self._namespace, options=options)
+
+        _type = self.py_type
+        # Check for circular dependency
+        if self.py_type in processing and hasattr(self.py_type, "__name__"):
+            # This is a circular reference - use a ForwardRef to break the cycle
+            _type = ForwardRef(py_type.__name__)  # type: ignore
+
+        self.schema = _schema_obj(_type, namespace=self._namespace, options=options, processing=processing)
 
         if self.default != dataclasses.MISSING:
             if isinstance(self.schema, UnionSchema):
@@ -1083,7 +1160,13 @@ class DataclassSchema(RecordSchema):
         py_type = _type_from_annotated(py_type)
         return dataclasses.is_dataclass(py_type)
 
-    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         An Avro record schema for a given Python dataclass
 
@@ -1091,7 +1174,7 @@ class DataclassSchema(RecordSchema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
         self.py_fields = dataclasses.fields(py_type)
         self.record_fields = [self._record_field(field) for field in self.py_fields]
@@ -1109,6 +1192,7 @@ class DataclassSchema(RecordSchema):
             default=default,
             aliases=aliases,
             options=self.options,
+            processing=self.processing,
         )
 
         return field_obj
@@ -1131,7 +1215,13 @@ class PydanticSchema(RecordSchema):
         py_type = _type_from_annotated(py_type)
         return hasattr(py_type, "__pydantic_private__")
 
-    def __init__(self, py_type: Type[pydantic.BaseModel], namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type[pydantic.BaseModel],
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         An Avro record schema for a given Pydantic model class
 
@@ -1139,7 +1229,7 @@ class PydanticSchema(RecordSchema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         if Option.USE_CLASS_ALIAS in self.options:
             self.name = py_type.model_config.get("title") or self.name
         self.py_fields = py_type.model_fields
@@ -1159,6 +1249,7 @@ class PydanticSchema(RecordSchema):
             aliases=aliases,
             docs=py_field.description or "",
             options=self.options,
+            processing=self.processing,
         )
         return field_obj
 
@@ -1205,10 +1296,16 @@ class PlainClassSchema(RecordSchema):
             # If we are subclassing a string, used the "named string" approach
             and (inspect.isclass(py_type) and not issubclass(py_type, str))
             # and any other class with typed annotations
-            and bool(get_type_hints(py_type))
+            and has_annotations(py_type)
         )
 
-    def __init__(self, py_type: Type, namespace: Optional[str] = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: Optional[str] = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         An Avro record schema for a plain Python class with type hints
 
@@ -1216,7 +1313,7 @@ class PlainClassSchema(RecordSchema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
 
         # Try to get resolved type hints, but fall back to raw annotations if there are unresolved forward refs
@@ -1251,6 +1348,7 @@ class PlainClassSchema(RecordSchema):
             default=default,
             aliases=aliases,
             options=self.options,
+            processing=self.processing,
         )
         return field_obj
 
@@ -1271,7 +1369,13 @@ class TypedDictSchema(RecordSchema):
         """Whether this schema can represent a TypedDict"""
         return is_typeddict(py_type)
 
-    def __init__(self, py_type: Type, namespace: str | None = None, options: Option = Option(0)):
+    def __init__(
+        self,
+        py_type: Type,
+        namespace: str | None = None,
+        options: Option = Option(0),
+        processing: set[type] | None = None,
+    ):
         """
         An Avro record schema for a given Python TypedDict
 
@@ -1279,7 +1383,7 @@ class TypedDictSchema(RecordSchema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
         self.is_total = py_type.__dict__.get("__total__", True)
         self.py_fields: dict[str, Type] = get_type_hints(py_type, include_extras=True)
@@ -1306,6 +1410,7 @@ class TypedDictSchema(RecordSchema):
             namespace=self.namespace_override,
             aliases=aliases,
             options=self.options,
+            processing=self.processing,
         )
         return field_obj
 
@@ -1358,7 +1463,11 @@ def is_logically_json(py_type: Type) -> bool:
     return _is_list_any(py_type) or _is_list_dict_str_any(py_type) or _is_dict_str_any(py_type)
 
 
-def _is_class(py_type: Any, of_types: Union[Type, Tuple[Type, ...]], include_subclasses: bool = True) -> bool:
+def _is_class(
+    py_type: Any,
+    of_types: Union[Type, Tuple[Type, ...]],
+    include_subclasses: bool = True,
+) -> bool:
     """Return whether the given type is a (sub) class of a type or types"""
     py_type = _type_from_annotated(py_type)
     if include_subclasses:
@@ -1381,3 +1490,13 @@ def _type_from_annotated(py_type: Type) -> Type:
         return args[0]
     else:
         return py_type
+
+
+def has_annotations(py_type: Type) -> bool:
+    """Checks if a type has annotations"""
+    py_type = _type_from_annotated(py_type)
+    try:
+        return bool(typing.get_type_hints(py_type))
+    except Exception:
+        pass
+    return hasattr(py_type, "__annotations__")
