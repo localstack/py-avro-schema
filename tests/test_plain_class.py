@@ -10,7 +10,7 @@
 # specific language governing permissions and limitations under the License.
 
 import re
-from typing import Annotated, Final
+from typing import Annotated, Final, ForwardRef
 
 import pytest
 
@@ -201,3 +201,30 @@ def test_reference_id():
         ],
     }
     assert_schema(PyType, expected, options=Option.ADD_REFERENCE_ID)
+
+
+class PyType:
+    backend: ForwardRef("Backend")
+    value: str
+
+
+class Backend:
+    py_type: PyType
+
+
+def test_circular_dependencies():
+    expected = {
+        "fields": [
+            {
+                "name": "py_type",
+                "type": {
+                    "fields": [{"name": "backend", "type": "Backend"}, {"name": "value", "type": "string"}],
+                    "name": "PyType",
+                    "type": "record",
+                },
+            }
+        ],
+        "name": "Backend",
+        "type": "record",
+    }
+    assert_schema(Backend, expected)
