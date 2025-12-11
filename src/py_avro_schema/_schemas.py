@@ -268,7 +268,7 @@ class Schema(abc.ABC):
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
-        :param processing: Internal parameter to track types currently being processed (for circular dependencies).
+        :param processing: Internal parameter to track types currently being processed (for circular references).
         """
         self.py_type = py_type
         self.options = options
@@ -800,7 +800,7 @@ class DictSchema(Schema):
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
-        :param processing: Internal parameter to track types currently being processed (for circular dependencies).
+        :param processing: Internal parameter to track types currently being processed (for circular references).
         """
         super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
@@ -1049,11 +1049,11 @@ class RecordSchema(NamedSchema):
         :param py_type:   The Python class to generate a schema for.
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
-        :param processing: Internal parameter to track types currently being processed (for circular dependencies).
+        :param processing: Internal parameter to track types currently being processed (for circular references).
         """
         super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         self.processing = processing or set()
-        # Add this type to the processing set to detect circular dependencies
+        # Add this type to the processing set to detect circular references
         self.processing.add(py_type)
         self.record_fields: collections.abc.Sequence[RecordField] = []
 
