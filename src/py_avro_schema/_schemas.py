@@ -1459,7 +1459,10 @@ def _is_list_any(py_type: Type) -> bool:
 
 def is_logically_json(py_type: Type) -> bool:
     """Returns whether a given type is logically a JSON and can be serialized as such"""
-    return _is_list_any(py_type) or _is_list_dict_str_any(py_type) or _is_dict_str_any(py_type)
+    try:
+        return _is_list_any(py_type) or _is_list_dict_str_any(py_type) or _is_dict_str_any(py_type)
+    except RecursionError:
+        return False
 
 
 def _is_class(
