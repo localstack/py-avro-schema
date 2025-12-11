@@ -26,7 +26,6 @@ import inspect
 import re
 import sys
 import types
-import typing
 import uuid
 from enum import StrEnum
 from typing import (
@@ -1496,7 +1495,7 @@ def has_annotations(py_type: Type) -> bool:
     """Checks if a type has annotations"""
     py_type = _type_from_annotated(py_type)
     try:
-        return bool(typing.get_type_hints(py_type))
+        return bool(get_type_hints(py_type))
     except Exception:
         pass
     return hasattr(py_type, "__annotations__")
