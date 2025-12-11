@@ -212,7 +212,7 @@ class Backend:
     py_type: PyType
 
 
-def test_circular_dependencies():
+def test_circular_references():
     expected = {
         "fields": [
             {
