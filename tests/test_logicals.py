@@ -13,7 +13,7 @@ import datetime
 import decimal
 import re
 import uuid
-from typing import Annotated, Any, Dict, List, Union
+from typing import Annotated, Any, Union
 
 import pytest
 
@@ -188,9 +188,7 @@ def test_annotated_decimal_no_meta():
 
 
 def test_annotated_decimal_2_meta():
-    py_type = Annotated[
-        decimal.Decimal, pas.DecimalMeta(precision=5, scale=2), pas.DecimalMeta(precision=4)
-    ]
+    py_type = Annotated[decimal.Decimal, pas.DecimalMeta(precision=5, scale=2), pas.DecimalMeta(precision=4)]
     with pytest.raises(
         TypeError,
         match=re.escape(
@@ -252,7 +250,7 @@ def test_uuid_annotated():
 
 
 def test_dict_json_logical_string_field():
-    py_type = Dict[str, Any]
+    py_type = dict[str, Any]
     expected = {
         "type": "string",
         "logicalType": "json",
@@ -262,7 +260,7 @@ def test_dict_json_logical_string_field():
 
 
 def test_dict_json_logical_bytes_field():
-    py_type = Dict[str, Any]
+    py_type = dict[str, Any]
     expected = {
         "type": "bytes",
         "logicalType": "json",
@@ -271,7 +269,7 @@ def test_dict_json_logical_bytes_field():
 
 
 def test_list_json_logical_string_field():
-    py_type = List[Dict[str, Any]]
+    py_type = list[dict[str, Any]]
     expected = {
         "type": "string",
         "logicalType": "json",
@@ -281,7 +279,7 @@ def test_list_json_logical_string_field():
 
 
 def test_list_json_logical_bytes_field():
-    py_type = List[Dict[str, Any]]
+    py_type = list[dict[str, Any]]
     expected = {
         "type": "bytes",
         "logicalType": "json",
@@ -290,6 +288,6 @@ def test_list_json_logical_bytes_field():
 
 
 def test_list_json_logical_list_any():
-    py_type = List[Any]
+    py_type = list[Any]
     expected = {"type": "bytes", "logicalType": "json"}
     assert_schema(py_type, expected)

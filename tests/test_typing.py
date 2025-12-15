@@ -46,9 +46,7 @@ def test_decimal_scale_must_be_positive():
 
 
 def test_decimal_scale_must_not_exceed_precision():
-    with pytest.raises(
-        ValueError, match=re.escape("Scale must be no more than precision of 4. Given value: 5")
-    ):
+    with pytest.raises(ValueError, match=re.escape("Scale must be no more than precision of 4. Given value: 5")):
         DecimalMeta(precision=4, scale=5)
 
 
@@ -84,7 +82,5 @@ def test_precision_lt_scale():
 
 
 def test_bad_indexing():
-    with pytest.raises(
-        TypeError, match=re.escape('type of argument "params" must be a tuple; got int instead')
-    ):
+    with pytest.raises(TypeError, match=re.escape('type of argument "params" must be a tuple; got int instead')):
         DecimalType[4]
