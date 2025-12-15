@@ -12,16 +12,11 @@ import dataclasses
 import enum
 import re
 import sys
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import (
     Annotated,
-    Dict,
-    List,
     Literal,
-    Mapping,
-    MutableSequence,
     Optional,
-    Sequence,
-    Tuple,
     Union,
 )
 
@@ -169,7 +164,7 @@ def test_none_annotated():
 
 
 def test_string_list():
-    py_type = List[str]
+    py_type = list[str]
     expected = {"type": "array", "items": "string"}
     assert_schema(py_type, expected)
 
@@ -181,7 +176,7 @@ def test_string_set():
 
 
 def test_string_list_annotated():
-    py_type = Annotated[List[str], ...]
+    py_type = Annotated[list[str], ...]
     expected = {"type": "array", "items": "string"}
     assert_schema(py_type, expected)
 
@@ -193,7 +188,7 @@ def test_string_list_lower_list():
 
 
 def test_int_list():
-    py_type = List[int]
+    py_type = list[int]
     expected = {"type": "array", "items": "long"}
     assert_schema(py_type, expected)
 
@@ -205,7 +200,7 @@ def test_int_set():
 
 
 def test_string_tuple():
-    py_type = Tuple[str]
+    py_type = tuple[str]
     expected = {"type": "array", "items": "string"}
     assert_schema(py_type, expected)
 
@@ -239,7 +234,7 @@ def test_string_set_of_set():
 
 
 def test_string_list_of_lists():
-    py_type = List[List[str]]
+    py_type = list[list[str]]
     expected = {
         "type": "array",
         "items": {
@@ -251,7 +246,7 @@ def test_string_list_of_lists():
 
 
 def test_string_list_of_dicts():
-    py_type = List[Dict[str, str]]
+    py_type = list[dict[str, str]]
     expected = {
         "type": "array",
         "items": {
@@ -263,13 +258,13 @@ def test_string_list_of_dicts():
 
 
 def test_string_dict():
-    py_type = Dict[str, str]
+    py_type = dict[str, str]
     expected = {"type": "map", "values": "string"}
     assert_schema(py_type, expected)
 
 
 def test_string_dict_annotated():
-    py_type = Annotated[Dict[str, str], ...]
+    py_type = Annotated[dict[str, str], ...]
     expected = {"type": "map", "values": "string"}
     assert_schema(py_type, expected)
 
@@ -281,17 +276,17 @@ def test_string_dict_lower_dict():
 
 
 def test_int_dict():
-    py_type = Dict[str, int]
+    py_type = dict[str, int]
     expected = {"type": "map", "values": "long"}
     assert_schema(py_type, expected)
 
 
 def test_string_dict_int_keys():
-    py_type = Dict[int, str]
+    py_type = dict[int, str]
     with pytest.raises(
         TypeError,
         match=re.escape(
-            "Cannot generate Avro mapping schema for Python dictionary typing.Dict[int, str] with non-string keys"
+            "Cannot generate Avro mapping schema for Python dictionary dict[int, str] with non-string keys"
         ),
     ):
         py_avro_schema._schemas.schema(py_type)
@@ -310,7 +305,7 @@ def test_string_mapping_annotated():
 
 
 def test_string_dict_of_dicts():
-    py_type = Dict[str, Dict[str, str]]
+    py_type = dict[str, dict[str, str]]
     expected = {
         "type": "map",
         "values": {
@@ -338,7 +333,7 @@ def test_union_string_int():
 
 
 def test_union_string_int_annotated():
-    py_type = Annotated[Union[str, int], ...]
+    py_type = Annotated[str | int, ...]
     expected = ["string", "long"]
     assert_schema(py_type, expected)
 
@@ -371,7 +366,7 @@ def test_union_string_string_int_py310():
 
 
 def test_union_of_union_string_int():
-    py_type = Union[str, Union[str, int]]
+    py_type = Union[str, str | int]
     expected = ["string", "long"]
     assert_schema(py_type, expected)
 
@@ -404,7 +399,7 @@ def test_optional_str():
 
 
 def test_optional_str_annotated():
-    py_type = Annotated[Optional[str], ...]
+    py_type = Annotated[str | None, ...]
     expected = ["string", "null"]
     assert_schema(py_type, expected)
 
@@ -509,7 +504,8 @@ def test_enum_non_string_values():
         GREEN = 1
 
     with pytest.raises(
-        TypeError, match="Avro enum schema members must be strings. <enum 'PyType'> uses {<class 'int'>} values."
+        TypeError,
+        match="Avro enum schema members must be strings. <enum 'PyType'> uses {<class 'int'>} values.",
     ):
         assert_schema(PyType, {})
 

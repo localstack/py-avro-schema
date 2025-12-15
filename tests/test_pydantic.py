@@ -11,7 +11,7 @@
 
 import decimal
 import uuid
-from typing import Annotated, List, Optional, Union
+from typing import Annotated
 
 import pydantic
 import pytest
@@ -83,7 +83,7 @@ def test_string_field_default_wrong_type():
 
 def test_optional_field_default():
     class PyType(pydantic.BaseModel):
-        field_a: Optional[str] = None
+        field_a: str | None = None
 
     expected = {
         "type": "record",
@@ -104,7 +104,7 @@ def test_optional_field_default():
 
 def test_list_string_field():
     class PyType(pydantic.BaseModel):
-        field_a: List[str]
+        field_a: list[str]
 
     expected = {
         "type": "record",
@@ -124,7 +124,7 @@ def test_list_string_field():
 
 def test_list_string_field_default():
     class PyType(pydantic.BaseModel):
-        field_a: List[str] = []  # Pydantic allows mutable defaults like this
+        field_a: list[str] = []  # Pydantic allows mutable defaults like this
 
     expected = {
         "type": "record",
@@ -145,7 +145,7 @@ def test_list_string_field_default():
 
 def test_list_string_field_default_wrong_type():
     class PyType(pydantic.BaseModel):
-        field_a: List[str] = [1]  # Pydantic allows mutable defaults like this
+        field_a: list[str] = [1]  # Pydantic allows mutable defaults like this
 
     with pytest.raises(TypeError, match=r"type of default_value\[0\] must be str; got int instead"):
         assert_schema(PyType, {})
@@ -185,7 +185,7 @@ def test_list_dataclass_field():
         field_a: str
 
     class PyType(pydantic.BaseModel):
-        field_child: List[PyTypeChild]
+        field_child: list[PyTypeChild]
 
     expected = {
         "type": "record",
@@ -476,7 +476,9 @@ def test_class_title_with_space():
 def test_annotated_decimal():
     class PyType(pydantic.BaseModel):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=2), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=2),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     expected = {
@@ -518,7 +520,9 @@ def test_field_alias():
 def test_annotated_decimal_in_base():
     class Base(pydantic.BaseModel):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=2), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=2),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     class PyType(Base):
@@ -549,12 +553,16 @@ def test_annotated_decimal_in_base():
 def test_annotated_decimal_overridden():
     class Base(pydantic.BaseModel):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=0), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=0),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     class PyType(Base):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=2), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=2),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     expected = {
@@ -615,7 +623,7 @@ def test_base_model_defaults():
 
 def test_nested_base_model_list_default():
     class Default(pydantic.BaseModel):
-        field_a: List[str] = pydantic.Field(..., default_factory=list)
+        field_a: list[str] = pydantic.Field(..., default_factory=list)
 
     class PyType(pydantic.BaseModel):
         default: Default = pydantic.Field(..., default_factory=Default)
@@ -649,13 +657,13 @@ def test_nested_base_model_list_default():
 
 def test_nested_base_model_union_model_default():
     class DefaultA(pydantic.BaseModel):
-        field_a: List[str] = pydantic.Field(..., default_factory=list)
+        field_a: list[str] = pydantic.Field(..., default_factory=list)
 
     class DefaultB(pydantic.BaseModel):
-        field_b: Union[int, float] = 0.0
+        field_b: int | float = 0.0
 
     class PyType(pydantic.BaseModel):
-        default: Union[DefaultA, DefaultB] = pydantic.Field(..., default_factory=DefaultA)
+        default: DefaultA | DefaultB = pydantic.Field(..., default_factory=DefaultA)
 
     expected = {
         "fields": [
@@ -664,7 +672,13 @@ def test_nested_base_model_union_model_default():
                 "name": "default",
                 "type": [
                     {
-                        "fields": [{"default": [], "name": "field_a", "type": {"items": "string", "type": "array"}}],
+                        "fields": [
+                            {
+                                "default": [],
+                                "name": "field_a",
+                                "type": {"items": "string", "type": "array"},
+                            }
+                        ],
                         "name": "DefaultA",
                         "type": "record",
                     },

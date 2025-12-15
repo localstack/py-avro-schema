@@ -23,7 +23,6 @@ schema for.
 """
 
 import importlib.metadata
-from typing import Optional, Type
 
 import memoization
 import orjson
@@ -53,9 +52,9 @@ __all__ = [
 
 @memoization.cached
 def generate(
-    py_type: Type,
+    py_type: type,
     *,
-    namespace: Optional[str] = None,
+    namespace: str | None = None,
     options: Option = Option(0),
 ) -> bytes:
     """

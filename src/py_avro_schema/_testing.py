@@ -13,9 +13,9 @@
 """
 Test functions
 """
+
 import dataclasses
 import difflib
-from typing import Dict, Type, Union
 
 import avro.schema  # type: ignore
 import orjson
@@ -23,7 +23,7 @@ import orjson
 import py_avro_schema._schemas
 
 
-def assert_schema(py_type: Type, expected_schema: Union[str, Dict[str, str]], **kwargs) -> None:
+def assert_schema(py_type: type, expected_schema: str | dict[str, str], **kwargs) -> None:
     """Test that the given Python type results in the correct Avro schema"""
     if not kwargs.pop("do_auto_namespace", False):
         kwargs["options"] = kwargs.get("options", py_avro_schema.Option(0)) | py_avro_schema.Option.NO_AUTO_NAMESPACE
@@ -33,19 +33,14 @@ def assert_schema(py_type: Type, expected_schema: Union[str, Dict[str, str]], **
     expected_schema_json = orjson.dumps(expected_schema, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS).decode()
     actual_schema_json = orjson.dumps(actual_schema, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS).decode()
     if actual_schema != expected_schema:
-        print("Expected schema:")
-        print(expected_schema_json)
-        print("Actual schema:")
-        print(actual_schema_json)
-        print("Differences:")
-        for diff in difflib.unified_diff(
+        for _diff in difflib.unified_diff(
             expected_schema_json.splitlines(),
             actual_schema_json.splitlines(),
             fromfile="expected",
             tofile="actual",
             n=5,
         ):
-            print(diff)
+            pass
 
     assert actual_schema == expected_schema
     # Assert that we can parse the schema data as a valid Avro schema
