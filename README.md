@@ -1,52 +1,23 @@
-# py-avro-schema
+# LocalStack py-avro-schema
 
-Generate [Apache Avro][] schemas for Python types including standard library [data-classes][] and [Pydantic data models][].
-
-:blue_book: Documentation: https://py-avro-schema.readthedocs.io
-
-
-## Installing
-
-```shell
-python -m pip install py-avro-schema
-```
+This project is built on [py-avro-schema](https://github.com/jpmorganchase/py-avro-schema).
 
 ## Developing
 
-To setup a scratch/development virtual environment (under `.venv/`), first install [Tox][].
-Then run:
+To setup a virtual environment under `.venv/`, first install `uv`, then run:
 
 ```shell
-tox -e dev
+make install-dev
 ```
 
-The `py-avro-schema` package is installed in [editable mode][] inside the `.venv/` environment.
+## Release a new version
 
-Run tests by simply calling `tox`.
+To release a new version you can create a tag with the following commands:
 
-Install code quality Git hooks using `pre-commit install --install-hooks`.
+```shell
+git tag v4.0.0
+git push origin v4.0.0
+```
 
-
-## Terms & Conditions
-
-Copyright 2022 J.P. Morgan Chase & Co.
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-specific language governing permissions and limitations under the License.
-
-
-## Contributing
-
-See [CONTRIBUTING.md][]
-
-
-[Apache Avro]:          https://avro.apache.org
-[data-classes]:         https://docs.python.org/3/library/dataclasses.html
-[Pydantic data models]: https://docs.pydantic.dev/usage/models
-[Tox]:                  https://tox.wiki
-[editable mode]:        https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-e
-[CONTRIBUTING.md]:      https://github.com/jpmorganchase/.github/blob/main/CONTRIBUTING.md
+This will create a git tag and push it to the remote repository.
+This will trigger the build workflow and publish the package to PyPI.

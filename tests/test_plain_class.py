@@ -141,7 +141,11 @@ def test_opaque_field():
     class PyType:
         details: Annotated[Details, Opaque]
 
-    expected = {"fields": [{"name": "details", "type": "string"}], "name": "PyType", "type": "record"}
+    expected = {
+        "fields": [{"name": "details", "type": "string"}],
+        "name": "PyType",
+        "type": "record",
+    }
     assert_schema(PyType, expected)
 
 
@@ -163,7 +167,6 @@ def test_type_aliases_future():
 
 
 def test_typing_final():
-
     class PyType:
         var: Final[str]
         field: Final[dict[str, int]]
@@ -173,7 +176,10 @@ def test_typing_final():
             self.field = {"John": 123}
 
     expected = {
-        "fields": [{"name": "var", "type": "string"}, {"name": "field", "type": {"type": "map", "values": "long"}}],
+        "fields": [
+            {"name": "var", "type": "string"},
+            {"name": "field", "type": {"type": "map", "values": "long"}},
+        ],
         "name": "PyType",
         "type": "record",
     }

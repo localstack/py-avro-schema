@@ -392,7 +392,9 @@ def test_literal_different_types():
     py_type = Literal["", 42]
     with pytest.raises(
         TypeError,
-        match=re.escape("Cannot generate Avro schema for Python typing.Literal with mixed type values"),
+        match=re.escape(
+            "Cannot generate Avro schema for Python typing.Literal with mixed type values"
+        ),
     ):
         py_avro_schema._schemas.schema(py_type)
 
@@ -509,7 +511,8 @@ def test_enum_non_string_values():
         GREEN = 1
 
     with pytest.raises(
-        TypeError, match="Avro enum schema members must be strings. <enum 'PyType'> uses {<class 'int'>} values."
+        TypeError,
+        match="Avro enum schema members must be strings. <enum 'PyType'> uses {<class 'int'>} values.",
     ):
         assert_schema(PyType, {})
 

@@ -656,7 +656,8 @@ def test_decimal_field_default_precision_too_big():
         field_a: Annotated[decimal.Decimal, pas.DecimalMeta(4, 2)] = decimal.Decimal("123.45")
 
     with pytest.raises(
-        ValueError, match="Default value 123.45 has precision 5 which is greater than the schema's precision 4"
+        ValueError,
+        match="Default value 123.45 has precision 5 which is greater than the schema's precision 4",
     ):
         assert_schema(PyType, {})
 
@@ -666,7 +667,10 @@ def test_decimal_field_default_scale_too_big():
     class PyType:
         field_a: Annotated[decimal.Decimal, pas.DecimalMeta(4, 2)] = decimal.Decimal("1.234")
 
-    with pytest.raises(ValueError, match="Default value 1.234 has scale 3 which is greater than the schema's scale 2"):
+    with pytest.raises(
+        ValueError,
+        match="Default value 1.234 has scale 3 which is greater than the schema's scale 2",
+    ):
         assert_schema(PyType, {})
 
 
@@ -739,7 +743,9 @@ def test_time_field_default_no_tzinfo():
 def test_datetime_field_default():
     @dataclasses.dataclass
     class PyType:
-        field_a: datetime.datetime = datetime.datetime(1970, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        field_a: datetime.datetime = datetime.datetime(
+            1970, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc
+        )
 
     expected = {
         "type": "record",
@@ -764,7 +770,8 @@ def test_datetime_field_default_no_tzinfo():
         field_a: datetime.datetime = datetime.datetime(1970, 1, 1, 12, 0, 0)
 
     with pytest.raises(
-        TypeError, match=re.escape("Default datetime.datetime(1970, 1, 1, 12, 0) must be timezone-aware")
+        TypeError,
+        match=re.escape("Default datetime.datetime(1970, 1, 1, 12, 0) must be timezone-aware"),
     ):
         assert_schema(PyType, {})
 
@@ -837,8 +844,16 @@ def test_sequence_schema_defaults_with_items():
 
     expected = {
         "fields": [
-            {"default": ["foo", "bar"], "name": "field_a", "type": {"items": "string", "type": "array"}},
-            {"default": ["foo", "bar"], "name": "field_b", "type": {"items": "string", "type": "array"}},
+            {
+                "default": ["foo", "bar"],
+                "name": "field_a",
+                "type": {"items": "string", "type": "array"},
+            },
+            {
+                "default": ["foo", "bar"],
+                "name": "field_b",
+                "type": {"items": "string", "type": "array"},
+            },
         ],
         "name": "PyType",
         "type": "record",

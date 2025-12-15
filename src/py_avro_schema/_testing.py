@@ -13,6 +13,7 @@
 """
 Test functions
 """
+
 import dataclasses
 import difflib
 from typing import Dict, Type, Union
@@ -26,12 +27,21 @@ import py_avro_schema._schemas
 def assert_schema(py_type: Type, expected_schema: Union[str, Dict[str, str]], **kwargs) -> None:
     """Test that the given Python type results in the correct Avro schema"""
     if not kwargs.pop("do_auto_namespace", False):
-        kwargs["options"] = kwargs.get("options", py_avro_schema.Option(0)) | py_avro_schema.Option.NO_AUTO_NAMESPACE
+        kwargs["options"] = (
+            kwargs.get("options", py_avro_schema.Option(0))
+            | py_avro_schema.Option.NO_AUTO_NAMESPACE
+        )
     if not kwargs.pop("do_doc", False):
-        kwargs["options"] = kwargs.get("options", py_avro_schema.Option(0)) | py_avro_schema.Option.NO_DOC
+        kwargs["options"] = (
+            kwargs.get("options", py_avro_schema.Option(0)) | py_avro_schema.Option.NO_DOC
+        )
     actual_schema = py_avro_schema._schemas.schema(py_type, **kwargs)
-    expected_schema_json = orjson.dumps(expected_schema, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS).decode()
-    actual_schema_json = orjson.dumps(actual_schema, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS).decode()
+    expected_schema_json = orjson.dumps(
+        expected_schema, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS
+    ).decode()
+    actual_schema_json = orjson.dumps(
+        actual_schema, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS
+    ).decode()
     if actual_schema != expected_schema:
         print("Expected schema:")
         print(expected_schema_json)

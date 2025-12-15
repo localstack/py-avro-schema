@@ -13,6 +13,7 @@
 """
 Additional type hint classes etc
 """
+
 import dataclasses
 import decimal
 from typing import _GenericAlias  # type: ignore
@@ -51,7 +52,9 @@ class DecimalMeta:
             if self.scale < 0:
                 raise ValueError(f"Scale must be positive. Given value: {self.scale}")
             elif self.scale > self.precision:
-                raise ValueError(f"Scale must be no more than precision of {self.precision}. Given value: {self.scale}")
+                raise ValueError(
+                    f"Scale must be no more than precision of {self.precision}. Given value: {self.scale}"
+                )
 
 
 class DecimalType:
@@ -78,7 +81,9 @@ class DecimalType:
         if scale < 0:
             raise ValueError(f"Scale {scale} must be at least 0")
         if precision < scale:
-            raise ValueError(f"Precision {precision} must be greater than or equal to scale {scale}")
+            raise ValueError(
+                f"Precision {precision} must be greater than or equal to scale {scale}"
+            )
         # This is a little hacky. We use _GenericAlias without using type parameters. We just use integer instances for
         # scale and precision. That appears to work, but may not be a supported use case. For example, we cannot just do
         # ``DecimalType = _GenericAlias(decimal.Decimal, params)`` because that triggers type enforcement on params.

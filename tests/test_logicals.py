@@ -188,7 +188,9 @@ def test_annotated_decimal_no_meta():
 
 
 def test_annotated_decimal_2_meta():
-    py_type = Annotated[decimal.Decimal, pas.DecimalMeta(precision=5, scale=2), pas.DecimalMeta(precision=4)]
+    py_type = Annotated[
+        decimal.Decimal, pas.DecimalMeta(precision=5, scale=2), pas.DecimalMeta(precision=4)
+    ]
     with pytest.raises(
         TypeError,
         match=re.escape(

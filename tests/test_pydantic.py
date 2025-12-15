@@ -476,7 +476,9 @@ def test_class_title_with_space():
 def test_annotated_decimal():
     class PyType(pydantic.BaseModel):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=2), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=2),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     expected = {
@@ -518,7 +520,9 @@ def test_field_alias():
 def test_annotated_decimal_in_base():
     class Base(pydantic.BaseModel):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=2), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=2),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     class PyType(Base):
@@ -549,12 +553,16 @@ def test_annotated_decimal_in_base():
 def test_annotated_decimal_overridden():
     class Base(pydantic.BaseModel):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=0), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=0),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     class PyType(Base):
         field_a: Annotated[
-            decimal.Decimal, pas.DecimalMeta(precision=3, scale=2), pydantic.BeforeValidator(lambda x: x)
+            decimal.Decimal,
+            pas.DecimalMeta(precision=3, scale=2),
+            pydantic.BeforeValidator(lambda x: x),
         ]
 
     expected = {
@@ -596,7 +604,9 @@ def test_base_model_defaults():
                             "default": {"field_a": "default_a"},
                             "name": "default",
                             "type": {
-                                "fields": [{"default": "default_a", "name": "field_a", "type": "string"}],
+                                "fields": [
+                                    {"default": "default_a", "name": "field_a", "type": "string"}
+                                ],
                                 "name": "Default",
                                 "type": "record",
                             },
@@ -664,7 +674,13 @@ def test_nested_base_model_union_model_default():
                 "name": "default",
                 "type": [
                     {
-                        "fields": [{"default": [], "name": "field_a", "type": {"items": "string", "type": "array"}}],
+                        "fields": [
+                            {
+                                "default": [],
+                                "name": "field_a",
+                                "type": {"items": "string", "type": "array"},
+                            }
+                        ],
                         "name": "DefaultA",
                         "type": "record",
                     },
