@@ -128,6 +128,9 @@ class Option(enum.Flag):
     # the two cases.
     MARK_NON_TOTAL_TYPED_DICTS = enum.auto()
 
+    #: Adds a _avro_type field to the record schemas that contains the name of the class
+    ADD_TYPE_FIELD = enum.auto()
+
 
 JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_")]
 
@@ -987,6 +990,10 @@ class RecordSchema(NamedSchema):
             "name": self.name,
             "fields": [field.data(names=names) for field in self.record_fields],
         }
+        # In some cases, it might be useful to add the type of the serialized object to the record schema.
+        # For instance, this can be used for Unions.
+        if Option.ADD_TYPE_FIELD in self.options:
+            record_schema["fields"].append({"name": "_avro_schema", "type": ["null", "string"]})
         if self.namespace is not None:
             record_schema["namespace"] = self.namespace
             fqn = f"{self.namespace}.{self.name}"

@@ -18,6 +18,7 @@ import orjson
 
 import py_avro_schema as pas
 from py_avro_schema._alias import register_type_alias, register_type_aliases
+from py_avro_schema._testing import assert_schema
 
 
 def test_package_has_version():
@@ -67,3 +68,18 @@ def test_avro_type_aliases():
         "test_avro_schema.SuperOldDict",
         "test_avro_schema.VeryOldDict",
     ]
+
+
+def test_add_type_field():
+    class PyType:
+        field: str
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {"name": "field", "type": "string"},
+            {"name": "_avro_schema", "type": ["null", "string"]},
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.ADD_TYPE_FIELD)
