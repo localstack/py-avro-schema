@@ -1109,6 +1109,7 @@ class DataclassSchema(RecordSchema):
         return field_obj
 
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        """Return the schema data"""
         data = super().data_before_deduplication(names)
         if Option.ADD_TYPE_FIELD in self.options:
             data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
@@ -1249,6 +1250,7 @@ class PlainClassSchema(RecordSchema):
         return field_obj
 
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        """Return the schema data"""
         data = super().data_before_deduplication(names)
         if Option.ADD_TYPE_FIELD in self.options:
             data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
