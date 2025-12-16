@@ -72,6 +72,8 @@ JSONType = Union[JSONStr, JSONObj, JSONArray]
 
 NamesType = List[str]
 
+RUNTIME_TYPE_KEY = "_runtime_type"
+
 
 class TypeNotSupportedError(TypeError):
     """Error raised when a Avro schema cannot be generated for a given Python type"""
@@ -137,8 +139,8 @@ class Option(enum.Flag):
     # the two cases.
     MARK_NON_TOTAL_TYPED_DICTS = enum.auto()
 
-    #: Adds a _avro_type field to the record schemas that contains the name of the class
-    ADD_TYPE_FIELD = enum.auto()
+    #: Adds a _runtime_type field to the record schemas that contains the name of the class
+    ADD_RUNTIME_TYPE_FIELD = enum.auto()
 
 
 JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_")]
@@ -1111,8 +1113,8 @@ class DataclassSchema(RecordSchema):
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
         """Return the schema data"""
         data = super().data_before_deduplication(names)
-        if Option.ADD_TYPE_FIELD in self.options:
-            data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
+        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
+            data["fields"].append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
         return data
 
 
@@ -1252,8 +1254,8 @@ class PlainClassSchema(RecordSchema):
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
         """Return the schema data"""
         data = super().data_before_deduplication(names)
-        if Option.ADD_TYPE_FIELD in self.options:
-            data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
+        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
+            data["fields"].append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
         return data
 
 
