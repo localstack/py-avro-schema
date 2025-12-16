@@ -1114,6 +1114,7 @@ class DataclassSchema(RecordSchema):
             data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
         return data
 
+
 @register_schema
 class PydanticSchema(RecordSchema):
     """An Avro record schema for a given Pydantic model class"""
