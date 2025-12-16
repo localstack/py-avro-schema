@@ -137,6 +137,9 @@ class Option(enum.Flag):
     # the two cases.
     MARK_NON_TOTAL_TYPED_DICTS = enum.auto()
 
+    #: Adds a _avro_type field to the record schemas that contains the name of the class
+    ADD_TYPE_FIELD = enum.auto()
+
 
 JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_")]
 
@@ -1105,6 +1108,11 @@ class DataclassSchema(RecordSchema):
 
         return field_obj
 
+    def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        data = super().data_before_deduplication(names)
+        if Option.ADD_TYPE_FIELD in self.options:
+            data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
+        return data
 
 @register_schema
 class PydanticSchema(RecordSchema):
@@ -1238,6 +1246,12 @@ class PlainClassSchema(RecordSchema):
             options=self.options,
         )
         return field_obj
+
+    def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        data = super().data_before_deduplication(names)
+        if Option.ADD_TYPE_FIELD in self.options:
+            data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
+        return data
 
 
 @register_schema
