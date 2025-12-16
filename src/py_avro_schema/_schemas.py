@@ -72,6 +72,8 @@ JSONType = Union[JSONStr, JSONObj, JSONArray]
 
 NamesType = List[str]
 
+RUNTIME_TYPE_KEY = "_runtime_type"
+
 
 class TypeNotSupportedError(TypeError):
     """Error raised when a Avro schema cannot be generated for a given Python type"""
@@ -136,6 +138,9 @@ class Option(enum.Flag):
     # of each field is extended with `string`. This way, clients can add markers (e.g., `__td_missing__`) to discern
     # the two cases.
     MARK_NON_TOTAL_TYPED_DICTS = enum.auto()
+
+    #: Adds a _runtime_type field to the record schemas that contains the name of the class
+    ADD_RUNTIME_TYPE_FIELD = enum.auto()
 
 
 JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_")]
@@ -1105,6 +1110,13 @@ class DataclassSchema(RecordSchema):
 
         return field_obj
 
+    def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        """Return the schema data"""
+        data = super().data_before_deduplication(names)
+        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
+            data["fields"].append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
+        return data
+
 
 @register_schema
 class PydanticSchema(RecordSchema):
@@ -1238,6 +1250,13 @@ class PlainClassSchema(RecordSchema):
             options=self.options,
         )
         return field_obj
+
+    def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        """Return the schema data"""
+        data = super().data_before_deduplication(names)
+        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
+            data["fields"].append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
+        return data
 
 
 @register_schema
