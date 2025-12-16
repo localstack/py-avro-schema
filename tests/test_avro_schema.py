@@ -55,7 +55,10 @@ def test_avro_type_aliases():
         value: str
 
     json_data = pas.generate(PyTypedDict)
-    assert json.loads(json_data)["aliases"] == ["test_avro_schema.OldDict", "test_avro_schema.VeryOldDict"]
+    assert json.loads(json_data)["aliases"] == [
+        "test_avro_schema.OldDict",
+        "test_avro_schema.VeryOldDict",
+    ]
 
     register_type_alias(alias="test_avro_schema.SuperOldDict")(PyTypedDict)
     pas.generate.cache_clear()

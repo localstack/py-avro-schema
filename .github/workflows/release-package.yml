@@ -9,32 +9,42 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# This workflow will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Upload Python Package to PyPI
 
 on:
-  release:
-    types:
-    - published
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v4
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.13'
+
+    - name: Install UV
+      uses: astral-sh/setup-uv@v7
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install build
+        make install
+
     - name: Build package
-      run: python -m build
+      run: |
+        make build
+
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
