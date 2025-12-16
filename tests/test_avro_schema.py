@@ -79,7 +79,7 @@ def test_add_type_field():
         "name": "PyType",
         "fields": [
             {"name": "field", "type": "string"},
-            {"name": "_avro_schema", "type": ["null", "string"]},
+            {"name": "_avro_type", "type": ["null", "string"]},
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.ADD_TYPE_FIELD)

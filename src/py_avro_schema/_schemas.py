@@ -990,10 +990,6 @@ class RecordSchema(NamedSchema):
             "name": self.name,
             "fields": [field.data(names=names) for field in self.record_fields],
         }
-        # In some cases, it might be useful to add the type of the serialized object to the record schema.
-        # For instance, this can be used for Unions.
-        if Option.ADD_TYPE_FIELD in self.options:
-            record_schema["fields"].append({"name": "_avro_schema", "type": ["null", "string"]})
         if self.namespace is not None:
             record_schema["namespace"] = self.namespace
             fqn = f"{self.namespace}.{self.name}"
@@ -1107,6 +1103,12 @@ class DataclassSchema(RecordSchema):
         )
 
         return field_obj
+
+    def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        data = super().data_before_deduplication(names)
+        if Option.ADD_TYPE_FIELD in self.options:
+            data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
+        return data
 
 
 @register_schema
@@ -1246,6 +1248,12 @@ class PlainClassSchema(RecordSchema):
             options=self.options,
         )
         return field_obj
+
+    def data_before_deduplication(self, names: NamesType) -> JSONObj:
+        data = super().data_before_deduplication(names)
+        if Option.ADD_TYPE_FIELD in self.options:
+            data["fields"].append({"name": "_avro_type", "type": ["null", "string"]})
+        return data
 
 
 @register_schema
