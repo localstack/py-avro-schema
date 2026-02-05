@@ -91,6 +91,7 @@ class Option(enum.Flag):
     JSON_INDENT_2 = orjson.OPT_INDENT_2
 
     #: Sort keys in JSON data
+
     JSON_SORT_KEYS = orjson.OPT_SORT_KEYS
 
     #: Append a newline character at the end of the JSON data

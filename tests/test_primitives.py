@@ -65,9 +65,12 @@ def test_str_subclass_namespaced():
 
 
 def test_str_subclass_other_classes():
-    import packaging.version
+    class MyTestClass:
+        def capitalize(self):
+            return self
 
-    class PyType(packaging.version.Version, str): ...
+    class PyType(MyTestClass, str): ...
+
 
     expected = {
         "type": "string",
