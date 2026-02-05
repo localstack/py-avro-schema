@@ -545,6 +545,16 @@ def test_str_enum_invalid_name():
     assert_schema(OriginProtocolPolicy, expected)
 
 
+def test_str_enum_invalid_name_with_dot():
+    class StateReasonCode(enum.StrEnum):
+        FunctionError_ExtensionInitError = "FunctionError.ExtensionInitError"
+        FunctionError_InvalidEntryPoint = "FunctionError.InvalidEntryPoint"
+
+    expected = {"namedString": "StateReasonCode", "type": "string"}
+
+    assert_schema(StateReasonCode, expected)
+
+
 def test_duplicated_invalid_enum():
     class OriginProtocolPolicy(str, enum.Enum):
         http_only = "http-only"
