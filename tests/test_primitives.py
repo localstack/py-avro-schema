@@ -71,7 +71,6 @@ def test_str_subclass_other_classes():
 
     class PyType(MyTestClass, str): ...
 
-
     expected = {
         "type": "string",
         "namedString": "PyType",
