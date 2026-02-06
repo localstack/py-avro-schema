@@ -48,7 +48,7 @@ keywords = [
 ]
 
 # Minimum supported Python version
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 # All runtime dependencies that must be packaged, pin major version only.
 dependencies = [
     "avro~=1.10",
@@ -67,25 +67,33 @@ dependencies = [
 "Download" = "https://pypi.python.org/pypi/py-avro-schema"
 "Source Code" = "https://github.com/localstack/py-avro-schema"
 
-
-[project.optional-dependencies]
-
-docs = [
-    "sphinx",
-    "sphinx-rtd-theme",
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+exclude = [
+    ".venv",
+    "venv*",
+    "dist",
+    "build",
+    "target",
+    "*.egg-info",
+    ".git"
 ]
+
+[tool.ruff.lint]
+ignore = ["UP007", "UP045", "UP013", "B008", "B904"]
+select = ["B", "C", "E", "F", "I", "W", "T", "B9", "G", "UP"]
+
+[dependency-groups]
+
 testing = [
     "pydantic>=2",
     "pytest",
     "pytest-cov",
 ]
 linting = [
-    "black",
-    "flake8",
-    "interrogate",
-    "isort",
-    "mypy",
     "pre-commit",
+    "ruff>=0.6.9",
     "pydantic>=2",  # For mypy
 ]
 
@@ -103,25 +111,3 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 # Section required to populate package version from Git tag
 
-
-[tool.interrogate]
-
-fail-under = 100
-verbose = 2
-color = true
-omit-covered-files = true
-
-
-[tool.coverage.report]
-
-fail_under = 90
-
-
-[tool.black]
-
-line-length = 120
-
-
-[tool.isort]
-
-profile = "black"

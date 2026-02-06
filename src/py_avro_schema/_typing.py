@@ -16,8 +16,9 @@ Additional type hint classes etc
 
 import dataclasses
 import decimal
-from typing import _GenericAlias  # type: ignore
-from typing import Optional, Tuple
+from typing import (
+    _GenericAlias,  # type: ignore
+)
 
 import typeguard
 
@@ -38,7 +39,7 @@ class DecimalMeta:
     """
 
     precision: int
-    scale: Optional[int] = None
+    scale: int | None = None
 
     def __post_init__(self):
         """
@@ -71,7 +72,7 @@ class DecimalType:
     """
 
     @typeguard.typechecked()
-    def __class_getitem__(cls, params: Tuple[int, int]) -> _GenericAlias:
+    def __class_getitem__(cls, params: tuple[int, int]) -> _GenericAlias:
         """Class indexing/subscription using ``DecimalType[precision, scale]"""
         precision, scale = params
         if precision <= 0:
