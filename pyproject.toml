@@ -75,7 +75,6 @@ docs = [
     "sphinx-rtd-theme",
 ]
 testing = [
-    "packaging",  # A test case uses packaging.version.Version
     "pydantic>=2",
     "pytest",
     "pytest-cov",

@@ -65,9 +65,11 @@ def test_str_subclass_namespaced():
 
 
 def test_str_subclass_other_classes():
-    import packaging.version
+    class MyTestClass:
+        def capitalize(self):
+            return self
 
-    class PyType(packaging.version.Version, str): ...
+    class PyType(MyTestClass, str): ...
 
     expected = {
         "type": "string",
@@ -543,6 +545,16 @@ def test_str_enum_invalid_name():
     expected = {"namedString": "OriginProtocolPolicy", "type": "string"}
 
     assert_schema(OriginProtocolPolicy, expected)
+
+
+def test_str_enum_invalid_name_with_dot():
+    class StateReasonCode(enum.StrEnum):
+        FunctionError_ExtensionInitError = "FunctionError.ExtensionInitError"
+        FunctionError_InvalidEntryPoint = "FunctionError.InvalidEntryPoint"
+
+    expected = {"namedString": "StateReasonCode", "type": "string"}
+
+    assert_schema(StateReasonCode, expected)
 
 
 def test_duplicated_invalid_enum():

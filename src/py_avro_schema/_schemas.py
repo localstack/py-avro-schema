@@ -46,11 +46,9 @@ from typing import (
     get_type_hints,
 )
 
-import avro.name
 import more_itertools
 import orjson
 import typeguard
-from avro.errors import InvalidName
 
 import py_avro_schema._typing
 from py_avro_schema._alias import get_aliases, get_field_aliases_and_actual_type
@@ -73,6 +71,7 @@ JSONType = Union[JSONStr, JSONObj, JSONArray]
 NamesType = List[str]
 
 RUNTIME_TYPE_KEY = "_runtime_type"
+SYMBOL_REGEX = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 class TypeNotSupportedError(TypeError):
@@ -92,6 +91,7 @@ class Option(enum.Flag):
     JSON_INDENT_2 = orjson.OPT_INDENT_2
 
     #: Sort keys in JSON data
+
     JSON_SORT_KEYS = orjson.OPT_SORT_KEYS
 
     #: Append a newline character at the end of the JSON data
@@ -930,12 +930,14 @@ class EnumSchema(NamedSchema):
             raise TypeError(f"Avro enum schema members must be strings. {py_type} uses {symbol_types} values.")
 
     def _is_valid_enum(self) -> bool:
-        """Checks if all the symbols of the enum are valid Avro names."""
-        try:
-            for _symbol in self.symbols:
-                avro.name.validate_basename(_symbol)
-        except InvalidName:
-            return False
+        """
+        Checks if all the symbols of the enum are valid Avro names.
+        Based on `fastavro._schema_py._validate_enum_symbols`
+        """
+        for _symbol in self.symbols:
+            if not isinstance(_symbol, str) or not SYMBOL_REGEX.fullmatch(_symbol):
+                return False
+
         return True
 
     def data(self, names: NamesType) -> JSONType:

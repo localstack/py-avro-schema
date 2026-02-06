@@ -13,6 +13,7 @@
 """
 Test functions
 """
+
 import dataclasses
 import difflib
 from typing import Dict, Type, Union

@@ -13,6 +13,7 @@
 """
 Additional type hint classes etc
 """
+
 import dataclasses
 import decimal
 from typing import _GenericAlias  # type: ignore
