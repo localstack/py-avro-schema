@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Annotated, TypedDict
+from typing import Annotated, NotRequired, TypedDict
 
 import py_avro_schema as pas
 from py_avro_schema._alias import Alias, register_type_alias
@@ -103,13 +103,31 @@ def test_non_total_typed_dict():
         "type": "record",
         "name": "PyType",
         "fields": [
-            {
-                "name": "name",
-                "type": "string",
-            },
+            {"name": "name", "type": "string"},
             {"name": "nickname", "type": ["string", "null"]},
             {"name": "age", "type": ["long", "null", "string"]},
             {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
         ],
     }
+    assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
+
+
+def test_non_required_keyword():
+    class PyType(TypedDict):
+        name: str
+        value: NotRequired[str]
+        value_int: NotRequired[int]
+        nullable_value: NotRequired[str | None]
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {"name": "name", "type": "string"},
+            {"name": "value", "type": "string"},
+            {"name": "value_int", "type": ["long", "string"]},
+            {"name": "nullable_value", "type": ["string", "null"]},
+        ],
+    }
+
     assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
