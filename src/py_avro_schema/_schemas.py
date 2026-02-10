@@ -1290,13 +1290,13 @@ class TypedDictSchema(RecordSchema):
         aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
 
         if Option.MARK_NON_TOTAL_TYPED_DICTS in self.options and not self.is_total:
-            # If a TypedDict is marked as total=True, it does not need to contain all the field. However, we need to
+            # If a TypedDict is marked as total=False, it does not need to contain all the field. However, we need to
             # be able to distinguish between the fields that are missing from the ones that are present but set to None.
             # To do that, we extend the original type with str. We will later add a special string
             # (e.g., __td_missing__) as a marker at deserialization time.
             actual_type = Union[actual_type, str]  # type: ignore
         elif _is_not_required(actual_type):
-            # A field can be marked with typing.NotRequired even in a TypedDict with is not marked with total=True.
+            # A field can be marked with typing.NotRequired even in a TypedDict with is not marked with total=False.
             # Similarly as above, we extend the wrapped type with string.
             actual_type = Union[_unwrap_not_required(actual_type), str]  # type: ignore
 

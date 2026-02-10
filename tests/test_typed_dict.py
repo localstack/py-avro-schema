@@ -116,6 +116,7 @@ def test_non_required_keyword():
     class PyType(TypedDict):
         name: str
         value: NotRequired[str]
+        value_int: NotRequired[int]
         nullable_value: NotRequired[str | None]
 
     expected = {
@@ -124,6 +125,7 @@ def test_non_required_keyword():
         "fields": [
             {"name": "name", "type": "string"},
             {"name": "value", "type": "string"},
+            {"name": "value_int", "type": ["long", "string"]},
             {"name": "nullable_value", "type": ["string", "null"]},
         ],
     }
