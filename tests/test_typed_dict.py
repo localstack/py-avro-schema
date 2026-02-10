@@ -103,10 +103,7 @@ def test_non_total_typed_dict():
         "type": "record",
         "name": "PyType",
         "fields": [
-            {
-                "name": "name",
-                "type": "string",
-            },
+            {"name": "name", "type": "string"},
             {"name": "nickname", "type": ["string", "null"]},
             {"name": "age", "type": ["long", "null", "string"]},
             {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
@@ -125,10 +122,7 @@ def test_non_required_keyword():
         "type": "record",
         "name": "PyType",
         "fields": [
-            {
-                "name": "name",
-                "type": "string",
-            },
+            {"name": "name", "type": "string"},
             {"name": "value", "type": "string"},
             {"name": "nullable_value", "type": ["string", "null"]},
         ],
