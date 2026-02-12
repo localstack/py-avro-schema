@@ -29,6 +29,7 @@ import pytest
 
 import py_avro_schema as pas
 import py_avro_schema._schemas
+from py_avro_schema._testing import PyType as TestPyType
 from py_avro_schema._testing import assert_schema
 
 
@@ -416,6 +417,67 @@ def test_optional_str_py310():
     py_type = str | None
     expected = ["string", "null"]
     assert_schema(py_type, expected)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="Requires Python 3.10+")
+def test_optional_forward_ref_py310():
+    class PyType:
+        forward_ref: "TestPyType | None"
+
+    expected = {
+        "fields": [
+            {
+                "name": "forward_ref",
+                "type": [
+                    "PyType",
+                    "null",
+                ],
+            },
+        ],
+        "name": "PyType",
+        "type": "record",
+    }
+    assert_schema(PyType, expected)
+
+
+def test_optional_forward_ref_with_union():
+    class PyType:
+        forward_ref: Union["TestPyType", None]
+
+    expected = {
+        "fields": [
+            {
+                "name": "forward_ref",
+                "type": [
+                    "PyType",
+                    "null",
+                ],
+            },
+        ],
+        "name": "PyType",
+        "type": "record",
+    }
+    assert_schema(PyType, expected)
+
+
+def test_optional_forward_ref():
+    class PyType:
+        forward_ref: Optional["TestPyType"]
+
+    expected = {
+        "fields": [
+            {
+                "name": "forward_ref",
+                "type": [
+                    "PyType",
+                    "null",
+                ],
+            },
+        ],
+        "name": "PyType",
+        "type": "record",
+    }
+    assert_schema(PyType, expected)
 
 
 def test_enum():
