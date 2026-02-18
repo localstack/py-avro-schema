@@ -104,9 +104,9 @@ def test_non_total_typed_dict():
         "name": "PyType",
         "fields": [
             {"name": "name", "type": "string"},
-            {"name": "nickname", "type": ["string", "null"]},
-            {"name": "age", "type": ["long", "null", "string"]},
-            {"name": "opt", "type": [{"namedString": "Opt", "type": "string"}, "null"]},
+            {"name": "nickname", "type": ["null", "string"], "default": None},
+            {"name": "age", "type": ["null", "long", "string"], "default": None},
+            {"name": "opt", "type": ["null", {"namedString": "Opt", "type": "string"}], "default": None},
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
