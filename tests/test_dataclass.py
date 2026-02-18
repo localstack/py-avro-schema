@@ -887,3 +887,57 @@ def test_reference_id():
         ],
     }
     assert_schema(PyType, expected, options=Option.ADD_REFERENCE_ID)
+
+
+def test_deterministic_defaults_datetime():
+    @dataclasses.dataclass
+    class PyType:
+        field_a: datetime.datetime = dataclasses.field(
+            default_factory=lambda: datetime.datetime.now(tz=datetime.timezone.utc)
+        )
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "field_a",
+                "type": {"type": "long", "logicalType": "timestamp-micros"},
+                "default": 0,
+            }
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.DETERMINISTIC_DEFAULTS)
+
+
+def test_deterministic_defaults_uuid_str():
+    import uuid
+
+    def short_uid() -> str:
+        return str(uuid.uuid4())[0:8]
+
+    def long_uid() -> str:
+        return str(uuid.uuid4())
+
+    @dataclasses.dataclass
+    class PyType:
+        _long_uid: str = dataclasses.field(default_factory=long_uid)
+        _short_uid: str = dataclasses.field(default_factory=short_uid)
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "_long_uid",
+                "type": "string",
+                "default": "",
+            },
+            {
+                "name": "_short_uid",
+                "type": "string",
+                "default": "",
+            },
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.DETERMINISTIC_DEFAULTS)
