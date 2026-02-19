@@ -90,23 +90,40 @@ def test_field_alias():
 
 
 def test_non_total_typed_dict():
-    class Opt(StrEnum):
+    class InvalidEnumSymbol(StrEnum):
         val = "invalid-val"
+
+    class ValidEnumSymbol(StrEnum):
+        val = "valid_val"
 
     class PyType(TypedDict, total=False):
         name: str
         nickname: str | None
         age: int | None
-        opt: Opt | None
+        invalid: InvalidEnumSymbol | None
+        valid: ValidEnumSymbol | None
 
     expected = {
         "type": "record",
         "name": "PyType",
         "fields": [
             {"name": "name", "type": "string"},
-            {"name": "nickname", "type": ["null", "string"], "default": None},
-            {"name": "age", "type": ["null", "long", "string"], "default": None},
-            {"name": "opt", "type": ["null", {"namedString": "Opt", "type": "string"}], "default": None},
+            {"name": "nickname", "type": ["string", "null"], "default": "__td_missing__"},
+            {"name": "age", "type": ["string", "long", "null"], "default": "__td_missing__"},
+            {
+                "name": "invalid",
+                "type": [{"namedString": "InvalidEnumSymbol", "type": "string"}, "null"],
+                "default": "__td_missing__",
+            },
+            {
+                "default": "__td_missing__",
+                "name": "valid",
+                "type": [
+                    "string",
+                    {"default": "valid_val", "name": "ValidEnumSymbol", "symbols": ["valid_val"], "type": "enum"},
+                    "null",
+                ],
+            },
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)

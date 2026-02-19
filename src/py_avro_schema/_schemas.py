@@ -813,7 +813,7 @@ class UnionSchema(Schema):
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
         # Render the item schemas
-        schemas = (item_schema.data(names=names) for item_schema in self.item_schemas)
+        schemas = list(item_schema.data(names=names) for item_schema in self.item_schemas)
         # We need to deduplicate the schemas **after** rendering. This is because **different** Python types might
         # result in the **same** Avro schema. Preserving order as order may be significant in an Avro schema.
 
@@ -826,6 +826,12 @@ class UnionSchema(Schema):
             elif isinstance(_schema, dict) and _schema.get("type") == "string":
                 return "string"
             return _schema
+
+        # If a namedString schema (str subclass with extra metadata) and a plain "string" are both present,
+        # remove the plain "string" so the more informative namedString is preserved after deduplication.
+        has_named_string = any(isinstance(s, dict) and "namedString" in s for s in schemas)
+        if has_named_string:
+            schemas = [s for s in schemas if s != "string"]
 
         unique_schemas = list(more_itertools.unique_everseen(schemas, key=normalize_string_duplicates))
         if len(unique_schemas) > 1:
@@ -1299,7 +1305,7 @@ class TypedDictSchema(RecordSchema):
             if _is_optional(actual_type):
                 # Note: this works since this schema does not implement `make_default` and the base implementation
                 # simply return the provided type (None in this case).
-                default = None  # type: ignore
+                default = "__td_missing__"  # type: ignore
         elif _is_not_required(actual_type):
             # A field can be marked with typing.NotRequired even in a TypedDict with is not marked with total=False.
             # Similarly as above, we extend the wrapped type with string.
