@@ -1478,7 +1478,7 @@ def _avro_name_for_type(py_type: Type) -> str:
     if inspect.isclass(py_type):
         if py_type is type(None):
             return "Null"
-        if not (name:=py_type.__name__):
+        if not (name := py_type.__name__):
             raise TypeNotSupportedError(
                 f"Cannot generate a wrapper record name for Python type {py_type}: empty class name"
             )
