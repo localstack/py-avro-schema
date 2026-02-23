@@ -143,6 +143,9 @@ class Option(enum.Flag):
     #: Adds a _runtime_type field to the record schemas that contains the name of the class
     ADD_RUNTIME_TYPE_FIELD = enum.auto()
 
+    #: Add an __id field to records to track the id of mutable objects
+    ADD_REFERENCE_ID = enum.auto()
+
 
 JSON_OPTIONS = [opt for opt in Option if opt.name and opt.name.startswith("JSON_")]
 
@@ -1008,6 +1011,8 @@ class RecordSchema(NamedSchema):
             doc = _doc_for_class(self.py_type)
             if doc:
                 record_schema["doc"] = doc
+        if Option.ADD_REFERENCE_ID in self.options:
+            record_schema["fields"].append({"name": "__id", "type": ["null", "long"], "default": None})
         return record_schema
 
 

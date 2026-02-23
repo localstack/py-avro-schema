@@ -19,6 +19,7 @@ from typing import Annotated, Dict, List, Optional, Tuple
 import pytest
 
 import py_avro_schema as pas
+from py_avro_schema import Option
 from py_avro_schema._alias import Alias, register_type_aliases
 from py_avro_schema._testing import assert_schema
 
@@ -863,3 +864,26 @@ def test_field_alias():
         ],
     }
     assert_schema(PyType, expected)
+
+
+def test_reference_id():
+    @dataclasses.dataclass
+    class PyType:
+        var: str
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "var",
+                "type": "string",
+            },
+            {
+                "default": None,
+                "name": "__id",
+                "type": ["null", "long"],
+            },
+        ],
+    }
+    assert_schema(PyType, expected, options=Option.ADD_REFERENCE_ID)
