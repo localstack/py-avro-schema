@@ -315,7 +315,7 @@ class Schema(abc.ABC):
             "type": "record",
             "name": record_name,
             "fields": [
-                {"name": "__id", "type": ["null", "string"], "default": None},
+                {"name": "__id", "type": ["null", "long"], "default": None},
                 {"name": "__data", "type": inner_schema},
             ],
         }
