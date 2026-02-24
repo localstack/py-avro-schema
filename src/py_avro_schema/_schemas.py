@@ -73,6 +73,7 @@ NamesType = List[str]
 
 RUNTIME_TYPE_KEY = "_runtime_type"
 REF_ID_KEY = "__id"
+REF_DATA_KEY = "__data"
 SYMBOL_REGEX = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
@@ -315,8 +316,8 @@ class Schema(abc.ABC):
             "type": "record",
             "name": record_name,
             "fields": [
-                {"name": "__id", "type": ["null", "long"], "default": None},
-                {"name": "__data", "type": inner_schema},
+                {"name": REF_ID_KEY, "type": ["null", "long"], "default": None},
+                {"name": REF_DATA_KEY, "type": inner_schema},
             ],
         }
         if self.namespace:
@@ -751,7 +752,7 @@ class SequenceSchema(Schema):
         """
         list_default = [self.items_schema.make_default(item) for item in py_default]
         if Option.WRAP_INTO_RECORDS in self.options:
-            return {"__id": None, "__data": list_default}
+            return {REF_ID_KEY: None, REF_DATA_KEY: list_default}
         return list_default
 
 
@@ -825,7 +826,7 @@ class DictSchema(Schema):
     def make_default(self, py_default: Any) -> JSONType:
         """Return an Avro schema compliant default value for a given Python value"""
         if Option.WRAP_INTO_RECORDS in self.options:
-            return {"__id": None, "__data": py_default}
+            return {REF_ID_KEY: None, REF_DATA_KEY: py_default}
         return py_default
 
 
