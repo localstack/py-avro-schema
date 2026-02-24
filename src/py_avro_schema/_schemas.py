@@ -320,6 +320,9 @@ class Schema(abc.ABC):
                 {"name": REF_DATA_KEY, "type": inner_schema},
             ],
         }
+        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
+            record_schema["fields"].append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
+
         if self.namespace:
             record_schema["namespace"] = self.namespace
         return record_schema
