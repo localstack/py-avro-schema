@@ -817,7 +817,7 @@ class UnionSchema(Schema):
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
         # Render the item schemas
-        schemas = (item_schema.data(names=names) for item_schema in self.item_schemas)
+        schemas = list(item_schema.data(names=names) for item_schema in self.item_schemas)
         # We need to deduplicate the schemas **after** rendering. This is because **different** Python types might
         # result in the **same** Avro schema. Preserving order as order may be significant in an Avro schema.
 
@@ -830,6 +830,12 @@ class UnionSchema(Schema):
             elif isinstance(_schema, dict) and _schema.get("type") == "string":
                 return "string"
             return _schema
+
+        # If a namedString schema (str subclass with extra metadata) and a plain "string" are both present,
+        # remove the plain "string" so the more informative namedString is preserved after deduplication.
+        has_named_string = any(isinstance(s, dict) and "namedString" in s for s in schemas)
+        if has_named_string:
+            schemas = [s for s in schemas if s != "string"]
 
         unique_schemas = list(more_itertools.unique_everseen(schemas, key=normalize_string_duplicates))
         if len(unique_schemas) > 1:
@@ -1295,12 +1301,17 @@ class TypedDictSchema(RecordSchema):
         """Return an Avro record field object for a given TypedDict field"""
         aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
 
+        default = dataclasses.MISSING
         if Option.MARK_NON_TOTAL_TYPED_DICTS in self.options and not self.is_total:
             # If a TypedDict is marked as total=False, it does not need to contain all the field. However, we need to
             # be able to distinguish between the fields that are missing from the ones that are present but set to None.
             # To do that, we extend the original type with str. We will later add a special string
             # (e.g., __td_missing__) as a marker at deserialization time.
             actual_type = Union[actual_type, str]  # type: ignore
+            if _is_optional(actual_type):
+                # Note: this works since this schema does not implement `make_default` and the base implementation
+                # simply return the provided type (None in this case).
+                default = "__td_missing__"  # type: ignore
         elif _is_not_required(actual_type):
             # A field can be marked with typing.NotRequired even in a TypedDict with is not marked with total=False.
             # Similarly as above, we extend the wrapped type with string.
@@ -1311,6 +1322,7 @@ class TypedDictSchema(RecordSchema):
             name=py_field[0],
             namespace=self.namespace_override,
             aliases=aliases,
+            default=default,
             options=self.options,
         )
         return field_obj
@@ -1325,6 +1337,14 @@ def _doc_for_class(py_type: Type) -> str:
         return doc
     else:
         return ""
+
+
+def _is_optional(py_type: Type) -> bool:
+    """Given a Union of types, checks if None is one of those"""
+    try:
+        return type(None) in get_args(py_type)
+    except Exception:
+        return False
 
 
 def _is_not_required(py_type: Type) -> bool:
