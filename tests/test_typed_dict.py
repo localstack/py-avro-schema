@@ -131,3 +131,25 @@ def test_non_required_keyword():
     }
 
     assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
+
+
+def test_reference_id():
+    class PyType(TypedDict):
+        var: str
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "var",
+                "type": "string",
+            },
+            {
+                "default": None,
+                "name": "__id",
+                "type": ["null", "long"],
+            },
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.ADD_REFERENCE_ID)
