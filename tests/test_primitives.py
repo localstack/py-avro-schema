@@ -625,7 +625,7 @@ def test_string_list_wrap():
         "type": "record",
         "name": "StrList",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {"name": "__data", "type": {"type": "array", "items": "string"}},
         ],
     }
@@ -638,7 +638,7 @@ def test_string_set_wrap():
         "type": "record",
         "name": "StrSet",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {"name": "__data", "type": {"type": "array", "items": "string"}},
         ],
     }
@@ -651,7 +651,7 @@ def test_dict_wrap():
         "type": "record",
         "name": "IntMap",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {"name": "__data", "type": {"type": "map", "values": "long"}},
         ],
     }
@@ -664,7 +664,7 @@ def test_nested_list_wrap():
         "type": "record",
         "name": "StrListList",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {
                 "name": "__data",
                 "type": {
@@ -673,7 +673,7 @@ def test_nested_list_wrap():
                         "type": "record",
                         "name": "StrList",
                         "fields": [
-                            {"name": "__id", "type": ["null", "string"], "default": None},
+                            {"name": "__id", "type": ["null", "long"], "default": None},
                             {"name": "__data", "type": {"type": "array", "items": "string"}},
                         ],
                     },
@@ -702,7 +702,7 @@ def test_list_wrap_deduplication():
                     "type": "record",
                     "name": "StrList",
                     "fields": [
-                        {"name": "__id", "type": ["null", "string"], "default": None},
+                        {"name": "__id", "type": ["null", "long"], "default": None},
                         {"name": "__data", "type": {"type": "array", "items": "string"}},
                     ],
                 },
@@ -722,7 +722,7 @@ def test_union_list_wrap():
         "type": "record",
         "name": "IntOrStrList",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {"name": "__data", "type": {"type": "array", "items": ["string", "long"]}},
         ],
     }
@@ -735,7 +735,7 @@ def test_optional_list_wrap():
         "type": "record",
         "name": "NullOrStrList",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {"name": "__data", "type": {"type": "array", "items": ["string", "null"]}},
         ],
     }
@@ -748,7 +748,7 @@ def test_union_dict_wrap():
         "type": "record",
         "name": "IntOrStrMap",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {"name": "__data", "type": {"type": "map", "values": ["string", "long"]}},
         ],
     }
@@ -765,7 +765,7 @@ def test_list_wrap_with_custom_class_union():
         "type": "record",
         "name": "IntOrMyClassList",
         "fields": [
-            {"name": "__id", "type": ["null", "string"], "default": None},
+            {"name": "__id", "type": ["null", "long"], "default": None},
             {
                 "name": "__data",
                 "type": {
