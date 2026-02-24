@@ -763,7 +763,7 @@ def test_list_wrap_with_custom_class_union():
     py_type = list[Union[MyClass, int]]
     expected = {
         "type": "record",
-        "name": "IntOrMyClassList",
+        "name": "IntOrTestPrimitivesMyClassList",
         "fields": [
             {"name": "__id", "type": ["null", "long"], "default": None},
             {

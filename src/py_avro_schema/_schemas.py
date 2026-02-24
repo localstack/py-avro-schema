@@ -1470,8 +1470,10 @@ def _avro_name_for_type(py_type: Type) -> str:
     """
     Generate an Avro-compatible name for a given Python type. It is used when wrapping container types (mostly lists
     and maps) into Avro records.
+    It also uses the module name to build the name of the record. Initially, we thought about hashing all the fully
+    qualified names to distinguish `list[ClassA]` from `list[ClassA]` where `ClassA` are separate classes from
+    different modules. As Avro does not seem to have max length for the record name, this seems to be more readable.
     See `test_avro_name_for_type` test suite.
-    # TODO: should we add modules to naming for classes?
     """
     py_type = _type_from_annotated(py_type)
     if py_type is None or py_type is type(None):
@@ -1483,7 +1485,14 @@ def _avro_name_for_type(py_type: Type) -> str:
             raise TypeNotSupportedError(
                 f"Cannot generate a wrapper record name for Python type {py_type}: empty class name"
             )
-        return name[0].upper() + name[1:]
+        name = name[0].upper() + name[1:]
+        module = py_type.__module__
+        if module and module != "builtins":
+            mod_prefix = "".join(
+                word[0].upper() + word[1:] for part in module.split(".") for word in part.split("_") if word
+            )
+            return mod_prefix + name
+        return name
     if origin is not None and args:
         union_type = getattr(types, "UnionType", None)
         if origin is Union or (union_type and origin is union_type):
