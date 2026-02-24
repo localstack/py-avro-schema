@@ -72,6 +72,7 @@ JSONType = Union[JSONStr, JSONObj, JSONArray]
 NamesType = List[str]
 
 RUNTIME_TYPE_KEY = "_runtime_type"
+REF_ID_KEY = "__id"
 SYMBOL_REGEX = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
@@ -1012,7 +1013,7 @@ class RecordSchema(NamedSchema):
             if doc:
                 record_schema["doc"] = doc
         if Option.ADD_REFERENCE_ID in self.options:
-            record_schema["fields"].append({"name": "__id", "type": ["null", "long"], "default": None})
+            record_schema["fields"].append({"name": REF_ID_KEY, "type": ["null", "long"], "default": None})
         return record_schema
 
 
