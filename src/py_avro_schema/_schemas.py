@@ -1474,11 +1474,11 @@ def _avro_name_for_type(py_type: Type) -> str:
     # TODO: should we add modules to naming for classes?
     """
     py_type = _type_from_annotated(py_type)
+    if py_type is None or py_type is type(None):
+        return "Null"
     origin = get_origin(py_type)
     args = get_args(py_type)
     if inspect.isclass(py_type):
-        if py_type is type(None):
-            return "Null"
         if not (name := py_type.__name__):
             raise TypeNotSupportedError(
                 f"Cannot generate a wrapper record name for Python type {py_type}: empty class name"

@@ -83,6 +83,10 @@ def test_dict_with_list_of_custom_class():
     assert _avro_name_for_type(dict[str, list[ClassA]]) == "ClassAListMap"
 
 
+def test_dict_none_value():
+    assert _avro_name_for_type(dict[str, None]) == "NullMap"
+
+
 # Unions
 
 
