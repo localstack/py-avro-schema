@@ -619,6 +619,172 @@ def test_str_enum_invalid_name_with_dot():
     assert_schema(StateReasonCode, expected)
 
 
+def test_string_list_wrap():
+    py_type = list[str]
+    expected = {
+        "type": "record",
+        "name": "StrList",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {"name": "__data", "type": {"type": "array", "items": "string"}},
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_string_set_wrap():
+    py_type = set[str]
+    expected = {
+        "type": "record",
+        "name": "StrSet",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {"name": "__data", "type": {"type": "array", "items": "string"}},
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_dict_wrap():
+    py_type = dict[str, int]
+    expected = {
+        "type": "record",
+        "name": "IntMap",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {"name": "__data", "type": {"type": "map", "values": "long"}},
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_nested_list_wrap():
+    py_type = list[list[str]]
+    expected = {
+        "type": "record",
+        "name": "StrListList",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {
+                "name": "__data",
+                "type": {
+                    "type": "array",
+                    "items": {
+                        "type": "record",
+                        "name": "StrList",
+                        "fields": [
+                            {"name": "__id", "type": ["null", "long"], "default": None},
+                            {"name": "__data", "type": {"type": "array", "items": "string"}},
+                        ],
+                    },
+                },
+            },
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_list_wrap_deduplication():
+    """The same wrapper record name should only be emitted once; subsequent uses reference the name."""
+
+    @dataclasses.dataclass
+    class PyType:
+        items_a: list[str]
+        items_b: list[str]
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "items_a",
+                "type": {
+                    "type": "record",
+                    "name": "StrList",
+                    "fields": [
+                        {"name": "__id", "type": ["null", "long"], "default": None},
+                        {"name": "__data", "type": {"type": "array", "items": "string"}},
+                    ],
+                },
+            },
+            {
+                "name": "items_b",
+                "type": "StrList",
+            },
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_union_list_wrap():
+    py_type = list[Union[str, int]]
+    expected = {
+        "type": "record",
+        "name": "IntOrStrList",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {"name": "__data", "type": {"type": "array", "items": ["string", "long"]}},
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_optional_list_wrap():
+    py_type = list[Optional[str]]
+    expected = {
+        "type": "record",
+        "name": "NullOrStrList",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {"name": "__data", "type": {"type": "array", "items": ["string", "null"]}},
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_union_dict_wrap():
+    py_type = dict[str, Union[str, int]]
+    expected = {
+        "type": "record",
+        "name": "IntOrStrMap",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {"name": "__data", "type": {"type": "map", "values": ["string", "long"]}},
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+def test_list_wrap_with_custom_class_union():
+    @dataclasses.dataclass
+    class MyClass:
+        value: str
+
+    py_type = list[Union[MyClass, int]]
+    expected = {
+        "type": "record",
+        "name": "IntOrTestPrimitivesMyClassList",
+        "fields": [
+            {"name": "__id", "type": ["null", "long"], "default": None},
+            {
+                "name": "__data",
+                "type": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "record",
+                            "name": "MyClass",
+                            "fields": [{"name": "value", "type": "string"}],
+                        },
+                        "long",
+                    ],
+                },
+            },
+        ],
+    }
+    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
 def test_duplicated_invalid_enum():
     class OriginProtocolPolicy(str, enum.Enum):
         http_only = "http-only"
