@@ -312,14 +312,20 @@ class Schema(abc.ABC):
         if fullname in names:
             return fullname
         names.append(fullname)
+
+        fields = [
+            {"name": REF_ID_KEY, "type": ["null", "long"], "default": None},
+            {"name": REF_DATA_KEY, "type": inner_schema},
+        ]
+        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
+            fields.append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
+
         record_schema = {
             "type": "record",
             "name": record_name,
-            "fields": [
-                {"name": REF_ID_KEY, "type": ["null", "long"], "default": None},
-                {"name": REF_DATA_KEY, "type": inner_schema},
-            ],
+            "fields": fields,
         }
+
         if self.namespace:
             record_schema["namespace"] = self.namespace
         return record_schema
