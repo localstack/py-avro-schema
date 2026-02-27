@@ -321,10 +321,9 @@ class Schema(abc.ABC):
         Handles deduplication via ``names``.
         """
         record_name = _avro_name_for_type(_type_from_annotated(self.py_type))
-        fullname = f"{self.namespace}.{record_name}" if self.namespace else record_name
-        if fullname in names:
-            return fullname
-        names.append(fullname)
+        if record_name in names:
+            return record_name
+        names.append(record_name)
         record_schema = {
             "type": "record",
             "name": record_name,
@@ -333,8 +332,6 @@ class Schema(abc.ABC):
                 {"name": REF_DATA_KEY, "type": inner_schema},
             ],
         }
-        if self.namespace:
-            record_schema["namespace"] = self.namespace
         return record_schema
 
 
