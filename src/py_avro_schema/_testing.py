@@ -24,7 +24,9 @@ import orjson
 import py_avro_schema._schemas
 
 
-def assert_schema(py_type: Type, expected_schema: Union[str, Dict[str, str], List[str]], **kwargs) -> None:
+def assert_schema(
+    py_type: Type, expected_schema: Union[str, Dict[str, str], List[str | Dict[str, str]]], **kwargs
+) -> None:
     """Test that the given Python type results in the correct Avro schema"""
     if not kwargs.pop("do_auto_namespace", False):
         kwargs["options"] = kwargs.get("options", py_avro_schema.Option(0)) | py_avro_schema.Option.NO_AUTO_NAMESPACE

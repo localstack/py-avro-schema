@@ -385,6 +385,36 @@ def test_union_str_str():
     assert_schema(py_type, expected)
 
 
+def test_union_str_list_str_error():
+    py_type = Union[str, list[str]]
+    with pytest.raises(TypeError):
+        py_avro_schema._schemas.schema(py_type)
+
+
+def test_union_str_dict_str_error():
+    py_type = Union[str, dict[str, str]]
+    with pytest.raises(TypeError):
+        py_avro_schema._schemas.schema(py_type)
+
+
+def test_union_str_set_str_error():
+    py_type = Union[str, set[str]]
+    with pytest.raises(TypeError):
+        py_avro_schema._schemas.schema(py_type)
+
+
+def test_union_str_tuple_str_error():
+    py_type = Union[str, tuple[str, ...]]
+    with pytest.raises(TypeError):
+        py_avro_schema._schemas.schema(py_type)
+
+
+def test_union_str_list_str_with_marker():
+    py_type = Union[list[str], py_avro_schema._schemas.TDMissingMarker]
+    expected = [{"items": "string", "type": "array"}, {"namedString": "TDMissingMarker", "type": "string"}]
+    assert_schema(py_type, expected)
+
+
 def test_union_str_annotated_str():
     py_type = Union[str, Annotated[str, ...]]
     expected = "string"

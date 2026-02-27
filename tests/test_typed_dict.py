@@ -1,6 +1,20 @@
-from enum import StrEnum
-from typing import Annotated, NotRequired, TypedDict
+# Copyright 2022 J.P. Morgan Chase & Co.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
+from enum import StrEnum
+from typing import Annotated, NotRequired, TypedDict, Union
+
+import pytest
+
+import py_avro_schema
 import py_avro_schema as pas
 from py_avro_schema._alias import Alias, register_type_alias
 from py_avro_schema._testing import assert_schema
@@ -104,27 +118,35 @@ def test_non_total_typed_dict():
         valid: ValidEnumSymbol | None
 
     expected = {
-        "type": "record",
-        "name": "PyType",
         "fields": [
-            {"name": "name", "type": "string"},
-            {"name": "nickname", "type": ["string", "null"], "default": "__td_missing__"},
-            {"name": "age", "type": ["string", "long", "null"], "default": "__td_missing__"},
+            {"name": "name", "type": {"namedString": "TDMissingMarker", "type": "string"}},
             {
-                "name": "invalid",
-                "type": [{"namedString": "InvalidEnumSymbol", "type": "string"}, "null"],
                 "default": "__td_missing__",
+                "name": "nickname",
+                "type": ["null", {"namedString": "TDMissingMarker", "type": "string"}],
+            },
+            {
+                "default": "__td_missing__",
+                "name": "age",
+                "type": [{"namedString": "TDMissingMarker", "type": "string"}, "long", "null"],
+            },
+            {
+                "default": "__td_missing__",
+                "name": "invalid",
+                "type": [{"namedString": "TDMissingMarker", "type": "string"}, "null"],
             },
             {
                 "default": "__td_missing__",
                 "name": "valid",
                 "type": [
-                    "string",
+                    {"namedString": "TDMissingMarker", "type": "string"},
                     {"default": "valid_val", "name": "ValidEnumSymbol", "symbols": ["valid_val"], "type": "enum"},
                     "null",
                 ],
             },
         ],
+        "name": "PyType",
+        "type": "record",
     }
     assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
 
@@ -137,14 +159,14 @@ def test_non_required_keyword():
         nullable_value: NotRequired[str | None]
 
     expected = {
-        "type": "record",
-        "name": "PyType",
         "fields": [
             {"name": "name", "type": "string"},
-            {"name": "value", "type": "string"},
-            {"name": "value_int", "type": ["long", "string"]},
-            {"name": "nullable_value", "type": ["string", "null"]},
+            {"name": "value", "type": {"namedString": "TDMissingMarker", "type": "string"}},
+            {"name": "value_int", "type": ["long", {"namedString": "TDMissingMarker", "type": "string"}]},
+            {"name": "nullable_value", "type": ["null", {"namedString": "TDMissingMarker", "type": "string"}]},
         ],
+        "name": "PyType",
+        "type": "record",
     }
 
     assert_schema(PyType, expected, options=pas.Option.MARK_NON_TOTAL_TYPED_DICTS)
@@ -170,3 +192,15 @@ def test_reference_id():
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.ADD_REFERENCE_ID)
+
+
+def test_union_typed_dict_error():
+    class PyType(TypedDict):
+        var: str
+
+    class PyType2(TypedDict):
+        var: str
+
+    py_type = Union[PyType, PyType2]
+    with pytest.raises(TypeError):
+        py_avro_schema._schemas.schema(py_type)
