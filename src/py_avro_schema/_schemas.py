@@ -77,6 +77,19 @@ REF_DATA_KEY = "__data"
 SYMBOL_REGEX = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
+class TDMissingMarker(str):
+    """
+    Custom Typed Dict missing marker to indicate values that are in the annotations but not present at runtime.
+    We are using a custom subclass string type to be able to differentiate them when creating schemas.
+    See `py_avro_schema._schemas.TypedDictSchema._record_field` and `UnionSchema._validate_union`
+    """
+
+    ...
+
+
+TD_MISSING_MARKER = TDMissingMarker("__td_missing__")
+
+
 class TypeNotSupportedError(TypeError):
     """Error raised when a Avro schema cannot be generated for a given Python type"""
 
@@ -312,20 +325,14 @@ class Schema(abc.ABC):
         if fullname in names:
             return fullname
         names.append(fullname)
-
-        fields = [
-            {"name": REF_ID_KEY, "type": ["null", "long"], "default": None},
-            {"name": REF_DATA_KEY, "type": inner_schema},
-        ]
-        if Option.ADD_RUNTIME_TYPE_FIELD in self.options:
-            fields.append({"name": RUNTIME_TYPE_KEY, "type": ["null", "string"]})
-
         record_schema = {
             "type": "record",
             "name": record_name,
-            "fields": fields,
+            "fields": [
+                {"name": REF_ID_KEY, "type": ["null", "long"], "default": None},
+                {"name": REF_DATA_KEY, "type": inner_schema},
+            ],
         }
-
         if self.namespace:
             record_schema["namespace"] = self.namespace
         return record_schema
@@ -864,7 +871,33 @@ class UnionSchema(Schema):
         super().__init__(py_type, namespace=namespace, options=options)
         py_type = _type_from_annotated(py_type)
         args = get_args(py_type)
+        self._validate_union(args)
         self.item_schemas = [_schema_obj(arg, namespace=namespace, options=options) for arg in args]
+
+    @staticmethod
+    def _validate_union(args: tuple[Any, ...]) -> None:
+        """
+        Validate that the arguments of the Union are possible to deal with. At runtime, we cannot get the runtime type
+        of TypedDict instances, as they are just regular dicts.
+        Same for sequences like List and Set, we would have to scan them to know all the runtime types of the values
+        they contain.
+        :param args: list of types of the Union
+        :return: None
+        :raises: TypeError if the Union types are invalid
+        """
+        if type(None) not in args and TDMissingMarker not in args:
+            if any(
+                # Enum is treated as a Sequence
+                not EnumSchema.handles_type(arg)
+                and (
+                    is_typeddict(arg)
+                    or SequenceSchema.handles_type(arg)
+                    or DictSchema.handles_type(arg)
+                    or SetSchema.handles_type(arg)
+                )
+                for arg in args
+            ):
+                raise TypeError(f"Union of types {args} is not supported. Python cannot detect proper type at runtime")
 
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
@@ -1302,12 +1335,6 @@ class PlainClassSchema(RecordSchema):
         self.py_fields: list[tuple[str, type]] = []
         for k, v in type_hints.items():
             self.py_fields.append((k, v))
-        # We store __init__ parameters with default values. They can be used as defaults for the record.
-        self.signature_fields = {
-            param.name: (param.annotation, param.default)
-            for param in list(inspect.signature(py_type.__init__).parameters.values())[1:]
-            if param.default is not inspect._empty
-        }
         self.record_fields = [self._record_field(field) for field in self.py_fields]
 
     def _record_field(self, py_field: tuple[str, Type]) -> RecordField:
@@ -1315,10 +1342,6 @@ class PlainClassSchema(RecordSchema):
         aliases, actual_type = get_field_aliases_and_actual_type(py_field[1])
         name = py_field[0]
         default = dataclasses.MISSING
-        if field := self.signature_fields.get(name):
-            _annotation, _default = field
-            if actual_type is _annotation:
-                default = _default or dataclasses.MISSING
         field_obj = RecordField(
             py_type=actual_type,
             name=name,
@@ -1370,15 +1393,15 @@ class TypedDictSchema(RecordSchema):
             # be able to distinguish between the fields that are missing from the ones that are present but set to None.
             # To do that, we extend the original type with str. We will later add a special string
             # (e.g., __td_missing__) as a marker at deserialization time.
-            actual_type = Union[actual_type, str]  # type: ignore
+            actual_type = Union[actual_type, TDMissingMarker]  # type: ignore
             if _is_optional(actual_type):
                 # Note: this works since this schema does not implement `make_default` and the base implementation
                 # simply return the provided type (None in this case).
-                default = "__td_missing__"  # type: ignore
+                default = TD_MISSING_MARKER  # type: ignore
         elif _is_not_required(actual_type):
             # A field can be marked with typing.NotRequired even in a TypedDict with is not marked with total=False.
             # Similarly as above, we extend the wrapped type with string.
-            actual_type = Union[_unwrap_not_required(actual_type), str]  # type: ignore
+            actual_type = Union[_unwrap_not_required(actual_type), TDMissingMarker]  # type: ignore
 
         field_obj = RecordField(
             py_type=actual_type,

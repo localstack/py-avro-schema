@@ -51,7 +51,6 @@ def test_plain_class_with_type_hints():
             {
                 "name": "country",
                 "type": "string",
-                "default": "NLD",
             },
             {
                 "name": "latitude",

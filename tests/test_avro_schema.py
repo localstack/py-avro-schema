@@ -80,17 +80,3 @@ def test_add_type_field():
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.ADD_RUNTIME_TYPE_FIELD)
-
-
-def test_add_type_field_on_wrapped_record():
-    py_type = list[str]
-    expected = {
-        "type": "record",
-        "name": "StrList",
-        "fields": [
-            {"name": "__id", "type": ["null", "long"], "default": None},
-            {"name": "__data", "type": {"type": "array", "items": "string"}},
-            {"name": "_runtime_type", "type": ["null", "string"]},
-        ],
-    }
-    assert_schema(py_type, expected, options=pas.Option.WRAP_INTO_RECORDS | pas.Option.ADD_RUNTIME_TYPE_FIELD)
