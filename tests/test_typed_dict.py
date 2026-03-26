@@ -116,6 +116,8 @@ def test_non_total_typed_dict():
         age: int | None
         invalid: InvalidEnumSymbol | None
         valid: ValidEnumSymbol | None
+        bytes_data: bytes
+        bytes_data_nullable: bytes | None
 
     expected = {
         "fields": [
@@ -144,6 +146,11 @@ def test_non_total_typed_dict():
                     "null",
                 ],
             },
+            {
+                "name": "bytes_data",
+                "type": "bytes",
+            },
+            {"default": "__td_missing__", "name": "bytes_data_nullable", "type": ["bytes", "null"]},
         ],
         "name": "PyType",
         "type": "record",

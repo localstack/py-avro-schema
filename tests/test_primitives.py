@@ -430,6 +430,15 @@ def test_literal_different_types():
         py_avro_schema._schemas.schema(py_type)
 
 
+def test_union_bytes_string():
+    py_type = Union[str, bytes]
+    with pytest.raises(
+        TypeError,
+        match=re.escape("Avro does not support Union of types bytes and string"),
+    ):
+        py_avro_schema._schemas.schema(py_type)
+
+
 def test_optional_str():
     py_type = Optional[str]
     expected = ["string", "null"]
