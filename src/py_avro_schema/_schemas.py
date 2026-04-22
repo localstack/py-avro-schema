@@ -255,6 +255,15 @@ _AVRO_NAME_PATTERN = re.compile(r"^[A-Za-z]([A-Za-z0-9_])*$")
 _UUID_PATTERN = re.compile(r"^[0-9a-f]{8}(?:-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$", re.IGNORECASE)
 
 
+def is_valid_datetime(string: str) -> bool:
+    """Checks is a given string is a valid datetime timestamp"""
+    try:
+        datetime.datetime.fromisoformat(string)
+        return True
+    except ValueError:
+        return False
+
+
 def validate_name(value: str) -> str:
     """Validate (and return) whether a given string is a valid Avro name"""
     if not re.match(_AVRO_NAME_PATTERN, value):
@@ -1186,7 +1195,7 @@ class RecordField:
             if (
                 Option.DETERMINISTIC_DEFAULTS in self.options
                 and isinstance(default_value, str)
-                and _UUID_PATTERN.match(default_value)
+                and (_UUID_PATTERN.match(default_value) or is_valid_datetime(default_value))
             ):
                 default_value = ""
             field_data["default"] = default_value

@@ -941,3 +941,28 @@ def test_deterministic_defaults_uuid_str():
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.DETERMINISTIC_DEFAULTS)
+
+
+def test_deterministic_defaults_timestamp():
+
+    def timestamp_millis() -> str:
+        microsecond_time = datetime.datetime.now(tz=datetime.UTC)
+        microsecond_time = microsecond_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        return microsecond_time[:-4] + microsecond_time[-1]
+
+    @dataclasses.dataclass
+    class PyType:
+        time: str = dataclasses.field(default_factory=lambda: timestamp_millis())
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "time",
+                "type": "string",
+                "default": "",
+            },
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.DETERMINISTIC_DEFAULTS)
