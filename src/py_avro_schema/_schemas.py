@@ -248,6 +248,10 @@ def _schema_obj(
     :param options:   Schema generation options.
     """
     processing = processing or set()
+    # If py_type is currently being processed further up the stack, emit a ForwardRef to break the cycle
+    unwrapped = _type_from_annotated(py_type)
+    if unwrapped in processing and hasattr(unwrapped, "__name__"):
+        py_type = ForwardRef(unwrapped.__name__)  # type: ignore
     # Find concrete Schema subclasses defined in the current module
     for schema_class in sorted(_SCHEMA_CLASSES, key=lambda c: getattr(c, "__py_avro_priority", 0)):
         # Find the first schema class that handles py_type
@@ -790,7 +794,7 @@ class SequenceSchema(Schema):
         py_type: Type[collections.abc.MutableSequence],
         namespace: Optional[str] = None,
         options: Option = Option(0),
-        **kwargs,
+        processing: set[type] | None = None,
     ):
         """
         An Avro array schema for a given Python sequence
@@ -799,10 +803,10 @@ class SequenceSchema(Schema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
         args = get_args(py_type)  # TODO: validate if args has exactly 1 item?
-        self.items_schema = _schema_obj(args[0], namespace=namespace, options=options)
+        self.items_schema = _schema_obj(args[0], namespace=namespace, options=options, processing=self.processing)
 
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
@@ -838,7 +842,7 @@ class SetSchema(SequenceSchema):
         py_type: type[collections.abc.MutableSet],
         namespace: str | None = None,
         options: Option = Option(0),
-        **kwargs,
+        processing: set[type] | None = None,
     ):
         """
         An Avro array schema for a given Python sequence
@@ -847,7 +851,7 @@ class SetSchema(SequenceSchema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)  # type: ignore
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)  # type: ignore
 
 
 @register_schema
@@ -883,7 +887,7 @@ class DictSchema(Schema):
         args = get_args(py_type)
         if args[0] != str and not issubclass(args[0], StrEnum):
             raise TypeError(f"Cannot generate Avro mapping schema for Python dictionary {py_type} with non-string keys")
-        self.values_schema = _schema_obj(args[1], namespace=namespace, options=options)
+        self.values_schema = _schema_obj(args[1], namespace=namespace, options=options, processing=self.processing)
 
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
@@ -921,7 +925,7 @@ class UnionSchema(Schema):
         py_type: Type[Union[Any]],
         namespace: Optional[str] = None,
         options: Option = Option(0),
-        **kwargs,
+        processing: set[type] | None = None,
     ):
         """
         An Avro union schema for a given Python union type
@@ -930,11 +934,13 @@ class UnionSchema(Schema):
         :param namespace: The Avro namespace to add to schemas.
         :param options:   Schema generation options.
         """
-        super().__init__(py_type, namespace=namespace, options=options)
+        super().__init__(py_type, namespace=namespace, options=options, processing=processing)
         py_type = _type_from_annotated(py_type)
         args = get_args(py_type)
         self._validate_union(args)
-        self.item_schemas = [_schema_obj(arg, namespace=namespace, options=options) for arg in args]
+        self.item_schemas = [
+            _schema_obj(arg, namespace=namespace, options=options, processing=self.processing) for arg in args
+        ]
 
     @staticmethod
     def _validate_union(args: tuple[Any, ...]) -> None:
@@ -1233,13 +1239,7 @@ class RecordField:
         self.docs = docs
         self.options = options
 
-        _type = self.py_type
-        # Check for circular dependency
-        if self.py_type in processing and hasattr(self.py_type, "__name__"):
-            # This is a circular reference - use a ForwardRef to break the cycle
-            _type = ForwardRef(py_type.__name__)  # type: ignore
-
-        self.schema = _schema_obj(_type, namespace=self._namespace, options=options, processing=processing)
+        self.schema = _schema_obj(self.py_type, namespace=self._namespace, options=options, processing=processing)
 
         if self.default != dataclasses.MISSING:
             if isinstance(self.schema, UnionSchema):

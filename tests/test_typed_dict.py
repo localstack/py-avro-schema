@@ -211,3 +211,45 @@ def test_union_typed_dict_error():
     py_type = Union[PyType, PyType2]
     with pytest.raises(TypeError):
         py_avro_schema._schemas.schema(py_type)
+
+
+ConfigurationList = list["Configuration"]
+
+
+class Configuration(TypedDict):
+    Configurations: ConfigurationList | None
+
+
+def test_recursive_reference():
+    class PyType(TypedDict):
+        Configurations: ConfigurationList | None
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "Configurations",
+                "type": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "record",
+                            "name": "Configuration",
+                            "fields": [
+                                {
+                                    "name": "Configurations",
+                                    "type": [
+                                        {"type": "array", "items": "Configuration"},
+                                        "null",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                    "null",
+                ],
+            },
+        ],
+    }
+    assert_schema(PyType, expected)
