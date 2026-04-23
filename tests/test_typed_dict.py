@@ -274,7 +274,7 @@ class Configuration(TypedDict):
 
 
 def test_recursive_reference():
-    """Test simple recursive reference with no ``WRAP_INTO_RECORDS``."""
+    """Test simple recursive reference with no wrapped records."""
 
     class PyType(TypedDict):
         Configurations: ConfigurationList | None
@@ -355,3 +355,60 @@ def test_recursive_reference_with_wrap_into_records():
         ],
     }
     assert_schema(PyType, expected, options=pas.Option.WRAP_INTO_RECORDS)
+
+
+RecExpressions = list["RecExpression"]
+
+
+class RecExpression(TypedDict, total=False):
+    Or: RecExpressions | None
+    And: RecExpressions | None
+    Not: "RecExpression | None"
+
+
+def test_recursive_reference_with_wrap_into_records_and_namespaces():
+    """Checks that with WRAP_INTO_RECORDS and AUTO_NAMESPACE_MODULE a self-recursive record is referenced by
+    its fully-qualified name from inside the list wrapper.
+    """
+    expected = {
+        "type": "record",
+        "name": "RecExpression",
+        "namespace": "test_typed_dict",
+        "fields": [
+            {
+                "name": "Or",
+                "type": [
+                    {
+                        "type": "record",
+                        "name": "TestTypedDictRecExpressionList",
+                        "namespace": "builtins",
+                        "fields": [
+                            {"name": "__id", "type": ["null", "long"], "default": None},
+                            {
+                                "name": "__data",
+                                "type": {
+                                    "type": "array",
+                                    "items": "test_typed_dict.RecExpression",
+                                },
+                            },
+                        ],
+                    },
+                    "null",
+                ],
+            },
+            {
+                "name": "And",
+                "type": ["builtins.TestTypedDictRecExpressionList", "null"],
+            },
+            {
+                "name": "Not",
+                "type": ["test_typed_dict.RecExpression", "null"],
+            },
+        ],
+    }
+    assert_schema(
+        RecExpression,
+        expected,
+        options=pas.Option.WRAP_INTO_RECORDS,
+        do_auto_namespace=True,
+    )

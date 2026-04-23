@@ -234,6 +234,19 @@ def schema(
     return schema_data
 
 
+def _fullname_for_forward_ref(py_type: Type, namespace: Optional[str], options: Option) -> str:
+    """Computes the fully-qualified name to be used in a ForwardRef ot break cycles."""
+    name = py_type.__name__
+    if namespace is None and Option.NO_AUTO_NAMESPACE not in options:
+        module = inspect.getmodule(py_type)
+        if module and module.__name__ != "builtin":
+            if Option.AUTO_NAMESPACE_MODULE in options:
+                namespace = module.__name__
+            else:
+                namespace = module.__name__.split(".", 1)[0]
+    return f"{namespace}.{name}" if namespace else name
+
+
 def _schema_obj(
     py_type: Type,
     namespace: Optional[str] = None,
@@ -251,7 +264,7 @@ def _schema_obj(
     # If py_type is currently being processed further up the stack, emit a ForwardRef to break the cycle
     unwrapped = _type_from_annotated(py_type)
     if unwrapped in processing and hasattr(unwrapped, "__name__"):
-        py_type = ForwardRef(unwrapped.__name__)  # type: ignore
+        py_type = ForwardRef(_fullname_for_forward_ref(unwrapped, namespace, options))  # type: ignore
     # Find concrete Schema subclasses defined in the current module
     for schema_class in sorted(_SCHEMA_CLASSES, key=lambda c: getattr(c, "__py_avro_priority", 0)):
         # Find the first schema class that handles py_type
@@ -1613,10 +1626,7 @@ def _is_list_any(py_type: Type) -> bool:
 
 def is_logically_json(py_type: Type) -> bool:
     """Returns whether a given type is logically a JSON and can be serialized as such"""
-    try:
-        return _is_list_any(py_type) or _is_list_dict_str_any(py_type) or _is_dict_str_any(py_type)
-    except RecursionError:
-        return False
+    return _is_list_any(py_type) or _is_list_dict_str_any(py_type) or _is_dict_str_any(py_type)
 
 
 def _is_class(
