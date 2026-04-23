@@ -359,22 +359,27 @@ class Schema(abc.ABC):
         """
         return py_default
 
-    def _wrap_as_record(self, inner_schema: JSONObj, names: NamesType) -> JSONType:
+    def _wrap_as_record(
+        self,
+        names: NamesType,
+        build_inner: collections.abc.Callable[[NamesType], JSONObj],
+    ) -> JSONType:
         """
-        Wrap a container schema (array or map) into an Avro record with ``__id`` and ``__data`` fields.
-        Handles deduplication via ``names``.
+        Wrap a container schema into an Avro record with ``__id`` and ``__data`` fields. The wrapper's
+        fullname is reserved in ``names`` before internal data is computed. This is to avoid a recursive inner type
+        to be expanded again (as the wrapper is).
         """
         record_name = _avro_name_for_type(_type_from_annotated(self.py_type))
         fullname = f"{self.namespace}.{record_name}" if self.namespace else record_name
         if fullname in names:
             return fullname
         names.append(fullname)
-        record_schema = {
+        record_schema: JSONObj = {
             "type": "record",
             "name": record_name,
             "fields": [
                 {"name": REF_ID_KEY, "type": ["null", "long"], "default": None},
-                {"name": REF_DATA_KEY, "type": inner_schema},
+                {"name": REF_DATA_KEY, "type": build_inner(names)},
             ],
         }
         if self.namespace:
@@ -810,10 +815,12 @@ class SequenceSchema(Schema):
 
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
-        array_schema = {"type": "array", "items": self.items_schema.data(names=names)}
         if Option.WRAP_INTO_RECORDS not in self.options:
-            return array_schema
-        return self._wrap_as_record(array_schema, names)
+            return {"type": "array", "items": self.items_schema.data(names=names)}
+        return self._wrap_as_record(
+            names,
+            lambda n: {"type": "array", "items": self.items_schema.data(names=n)},
+        )
 
     def make_default(self, py_default: collections.abc.Sequence) -> JSONType:
         """Return an Avro schema compliant default value for a given Python Sequence
@@ -891,10 +898,12 @@ class DictSchema(Schema):
 
     def data(self, names: NamesType) -> JSONType:
         """Return the schema data"""
-        map_schema = {"type": "map", "values": self.values_schema.data(names=names)}
         if Option.WRAP_INTO_RECORDS not in self.options:
-            return map_schema
-        return self._wrap_as_record(map_schema, names)
+            return {"type": "map", "values": self.values_schema.data(names=names)}
+        return self._wrap_as_record(
+            names,
+            lambda n: {"type": "map", "values": self.values_schema.data(names=n)},
+        )
 
     def make_default(self, py_default: Any) -> JSONType:
         """Return an Avro schema compliant default value for a given Python value"""
@@ -1175,9 +1184,8 @@ class RecordSchema(NamedSchema):
         :param processing: Internal parameter to track types currently being processed (for circular references).
         """
         super().__init__(py_type, namespace=namespace, options=options, processing=processing)
-        self.processing = processing or set()
-        # Add this type to the processing set to detect circular references
-        self.processing.add(py_type)
+        # Per each record we copy the set, so sibling fields don't see each other as in progress.
+        self.processing = self.processing | {py_type}
         self.record_fields: collections.abc.Sequence[RecordField] = []
 
     def data_before_deduplication(self, names: NamesType) -> JSONObj:
@@ -1198,7 +1206,6 @@ class RecordSchema(NamedSchema):
                 record_schema["doc"] = doc
         if Option.ADD_REFERENCE_ID in self.options:
             record_schema["fields"].append({"name": REF_ID_KEY, "type": ["null", "long"], "default": None})
-        self.processing.discard(self.py_type)
         return record_schema
 
 

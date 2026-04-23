@@ -213,6 +213,58 @@ def test_union_typed_dict_error():
         py_avro_schema._schemas.schema(py_type)
 
 
+class SiblingInner(TypedDict):
+    x: str
+
+
+class SiblingOuter(TypedDict):
+    a: SiblingInner
+    b: list[SiblingInner]
+
+
+def test_sibling_fields_same_():
+    expected = {
+        "type": "record",
+        "name": "SiblingOuter",
+        "namespace": "test_typed_dict",
+        "fields": [
+            {
+                "name": "a",
+                "type": {
+                    "type": "record",
+                    "name": "SiblingInner",
+                    "namespace": "test_typed_dict",
+                    "fields": [{"name": "x", "type": "string"}],
+                },
+            },
+            {
+                "name": "b",
+                "type": {
+                    "type": "record",
+                    "name": "TestTypedDictSiblingInnerList",
+                    "namespace": "builtins",
+                    "fields": [
+                        {"name": "__id", "type": ["null", "long"], "default": None},
+                        {
+                            "name": "__data",
+                            "type": {
+                                "type": "array",
+                                "items": "test_typed_dict.SiblingInner",
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+    }
+    assert_schema(
+        SiblingOuter,
+        expected,
+        options=pas.Option.WRAP_INTO_RECORDS,
+        do_auto_namespace=True,
+    )
+
+
 ConfigurationList = list["Configuration"]
 
 
@@ -221,6 +273,8 @@ class Configuration(TypedDict):
 
 
 def test_recursive_reference():
+    """Test simple recursive reference with no ``WRAP_INTO_RECORDS``."""
+
     class PyType(TypedDict):
         Configurations: ConfigurationList | None
 
@@ -253,3 +307,50 @@ def test_recursive_reference():
         ],
     }
     assert_schema(PyType, expected)
+
+
+def test_recursive_reference_with_wrap_into_records():
+    """Checks that a self-referential record combined with ``WRAP_INTO_RECORDS`` must define the wrapper once."""
+
+    class PyType(TypedDict):
+        Configurations: ConfigurationList | None
+
+    expected = {
+        "type": "record",
+        "name": "PyType",
+        "fields": [
+            {
+                "name": "Configurations",
+                "type": [
+                    {
+                        "type": "record",
+                        "name": "TestTypedDictConfigurationList",
+                        "fields": [
+                            {"name": "__id", "type": ["null", "long"], "default": None},
+                            {
+                                "name": "__data",
+                                "type": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "record",
+                                        "name": "Configuration",
+                                        "fields": [
+                                            {
+                                                "name": "Configurations",
+                                                "type": [
+                                                    "TestTypedDictConfigurationList",
+                                                    "null",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                    "null",
+                ],
+            },
+        ],
+    }
+    assert_schema(PyType, expected, options=pas.Option.WRAP_INTO_RECORDS)
