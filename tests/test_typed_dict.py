@@ -222,7 +222,8 @@ class SiblingOuter(TypedDict):
     b: list[SiblingInner]
 
 
-def test_sibling_fields_same_():
+def test_sibling_fields_references():
+    """Check sibling attributes in a record won't all get a bare reference."""
     expected = {
         "type": "record",
         "name": "SiblingOuter",

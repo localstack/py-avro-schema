@@ -1184,7 +1184,7 @@ class RecordSchema(NamedSchema):
         :param processing: Internal parameter to track types currently being processed (for circular references).
         """
         super().__init__(py_type, namespace=namespace, options=options, processing=processing)
-        # Per each record we copy the set, so sibling fields don't see each other as in progress.
+        # Per each record we copy the set, to separete executions between siblings.
         self.processing = self.processing | {py_type}
         self.record_fields: collections.abc.Sequence[RecordField] = []
 
