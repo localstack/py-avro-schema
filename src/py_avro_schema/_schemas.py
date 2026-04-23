@@ -1188,16 +1188,6 @@ class RecordField:
             field_data["aliases"] = sorted(self.aliases)
         if self.default != dataclasses.MISSING:
             default_value = self.schema.make_default(self.default)
-
-            # When a field is a string, but it's default value produces a UUID-like, we do not pass through the UUID
-            # schema (which already sets an empty default). We need to catch here the strings that look like a UUID
-            # and set a deterministic default.
-            if (
-                Option.DETERMINISTIC_DEFAULTS in self.options
-                and isinstance(default_value, str)
-                and (_UUID_PATTERN.match(default_value) or is_valid_datetime(default_value))
-            ):
-                default_value = ""
             field_data["default"] = default_value
         if self.docs and Option.NO_DOC not in self.options:
             field_data["doc"] = self.docs
@@ -1232,6 +1222,15 @@ class DataclassSchema(RecordSchema):
         default = py_field.default
         if callable(py_field.default_factory):  # type: ignore
             default = py_field.default_factory()  # type: ignore
+            # When a field is a string, but it's default value produces a UUID-like, we do not pass through the UUID
+            # schema (which already sets an empty default). We need to catch here the strings that look like a UUID
+            # and set a deterministic default.
+            if (
+                Option.DETERMINISTIC_DEFAULTS in self.options
+                and isinstance(default, str)
+                and (_UUID_PATTERN.match(default) or is_valid_datetime(default))
+            ):
+                default = ""
         aliases, actual_type = get_field_aliases_and_actual_type(py_field.type)  # type: ignore
         field_obj = RecordField(
             py_type=actual_type,  # type: ignore

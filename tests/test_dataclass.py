@@ -953,6 +953,7 @@ def test_deterministic_defaults_timestamp():
     @dataclasses.dataclass
     class PyType:
         time: str = dataclasses.field(default_factory=lambda: timestamp_millis())
+        version: str = "2017-01-01"
 
     expected = {
         "type": "record",
@@ -962,6 +963,11 @@ def test_deterministic_defaults_timestamp():
                 "name": "time",
                 "type": "string",
                 "default": "",
+            },
+            {
+                "name": "version",
+                "type": "string",
+                "default": "2017-01-01",
             },
         ],
     }
